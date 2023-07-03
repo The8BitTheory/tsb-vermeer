@@ -1,0 +1,144 @@
+#RetroDevStudio.MetaData.BASIC:2049,Tuned Simons' BASIC,lowercase
+10 CA=$E800
+11 COLOUR 0,0,1
+16 IF A=0 THEN A=1:MEM:LOAD"TSB2.SET",0,0,CA
+
+20 DESIGN 2,CA+8*0
+21 @.B.BBBB.
+22 @B.BBBB.B
+23 @.B.BB.BB
+24 @BBB..BBB
+25 @BBB..BBB
+26 @BB.BB.B.
+27 @B.BBBB.B
+28 @.BBBB.B.
+
+30 DESIGN 2,CA+8*111
+31 @........
+32 @.BBBBBBB
+33 @.B......
+34 @.B.BBBBB
+35 @.B.B....
+36 @.B.B....
+37 @.B.B....
+38 @.B.B....
+
+40 DESIGN 2,CA+8*119
+41 @........
+42 @BBBBBBBB
+43 @........
+44 @BBBBBBBB
+45 @........
+46 @........
+47 @........
+48 @........
+
+50 DESIGN 2,CA+8*112
+51 @........
+52 @BBBBBBB.
+53 @......B.
+54 @BBBBB.B.
+55 @....B.B.
+56 @....B.B.
+57 @....B.B.
+58 @....B.B.
+
+60 DESIGN 2,CA+8*123
+61 @........
+62 @........
+63 @........
+64 @........
+65 @BBBBBBBB
+66 @........
+67 @BBBBBBBB
+68 @........
+
+70 DESIGN2,CA+8*116
+71 @.B.B....
+72 @.B.B....
+73 @.B.B....
+74 @.B.B....
+75 @.B.B....
+76 @.B.B....
+77 @.B.B....
+78 @.B.B....
+
+80 DESIGN2,CA+8*106
+81 @....B.B.
+82 @....B.B.
+83 @....B.B.
+84 @....B.B.
+85 @....B.B.
+86 @....B.B.
+87 @....B.B.
+88 @....B.B.
+
+90 DESIGN2,CA+8*108
+91 @.B.B....
+92 @.B.B....
+93 @.B.B....
+94 @.B.B....
+95 @.B.BBBBB
+96 @.B......
+97 @.BBBBBBB
+98 @........
+
+100 DESIGN2,CA+8*124
+101 @....B.B.
+102 @....B.B.
+103 @....B.B.
+104 @....B.B.
+105 @BBBBB.B.
+106 @......B.
+107 @BBBBBBB.
+108 @........
+
+113 DIM M$(6)
+114 M$(1)="EISEN   ":M$(2)="ANK     ":M$(3)="ARKT    "
+115 M$(4)="UKTION  ":M$(5)="AMMLUNG ":M$(6)="BERSICHT"
+
+116 BD$=CHR$(111)+CHR$(119)+CHR$(112)
+117 BD$=BD$+CHR$(116)+CHR$(32)+CHR$(106)
+118 BD$=BD$+CHR$(108)+CHR$(123)+CHR$(124)
+
+119 FS=12
+120 FILL 0,0,40,25,0,FS
+
+124 BX=1:BY=1:BW=30:BH=10
+126 EXEC FRAME
+128 CENTRE AT(BX,BY+2) "UNED IMONS' ASIC",BW
+130 CENTRE AT(BX,BY+4) "O SCH[N WIE EIN ERMEER!",BW
+
+
+140 BX=28:BY=16:BW=11:BH=8
+142 EXEC FRAME
+
+144 FOR X=1 TO 6
+146  ID=X:GOSUB 910
+148 NEXT
+150 ID=1:GOSUB 912
+
+160 KEYGET I$
+162 IF ASC(I$)=145 THEN GOSUB 910:ID=ID-1:R=-1:IF ID<1 THEN ID=6
+164 IF ASC(I$)=17 THEN GOSUB 910:ID=ID+1:R=-1:IF ID>6 THEN ID=1
+166 IF R THEN GOSUB 912
+
+168 IF ASC(I$)=13 THEN FS=ID:GOTO 120
+
+170 GOTO 160
+
+190 DO NULL
+199 END
+
+
+900 PROC FRAME
+902  INSERT BD$,BY,BX,BW,BH,6
+904  FCOL BY+BH,BX+1,BW,1,11
+906  FCOL BY+1,BX+BW,1,BH,11
+908 END PROC
+
+910 PRINT AT(BX+1,BY+ID) M$(ID);:RETURN
+
+912 PRINT AT(BX+1,BY+ID) ""M$(ID)"";:RETURN
+
+
