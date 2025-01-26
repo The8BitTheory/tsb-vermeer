@@ -118,12 +118,12 @@
 
 
 
-1100  M$(0)="USGANG   ":M$(1)="USGANG   ":M$(2)="USGANG   ":M$(3)="EISEN    "
-1110  M$(4)="OTEL     ":M$(5)="ALERIE   ":M$(6)="ANK      ":M$(7)="UKTION   "
-1120  M$(8)="LANTAGE  ":M$(9)="AGERHAUS ":M$(10)="ARKT     ":M$(11)="XPEDITION"
+1100  M$(0)="USGANG":M$(1)="USGANG":M$(2)="USGANG":M$(3)="EISEN"
+1110  M$(4)="OTEL":M$(5)="ALERIE":M$(6)="ANK":M$(7)="UKTION"
+1120  M$(8)="LANTAGE":M$(9)="AGERHAUS":M$(10)="ARKT":M$(11)="XPEDITION"
 
 # LANTAGE
-1130  M$(12)="AUFEN    ":M$(13)="ERKAUFEN ":M$(14)="ERWALTEN "
+1130  M$(12)="AUFEN":M$(13)="ERKAUFEN":M$(14)="ERWALTEN"
 
 
 
@@ -192,11 +192,13 @@
 6833  IF GS(1)=11 THEN IL=10:OC=0:OEXP
 
 # UY PLANTATION
-6834  IF GS(1)=12 THEN IL=10:OC=0:OPLABUY
+6834  IF GS(1)=12 THEN OPLABUY
 # ELL PLANTATION
 6835  IF GS(1)=13 THEN IL=10:OC=0:OPLASEL
 # MANAGE PLANTATION
 6836  IF GS(1)=14 THEN IL=10:OC=0:OPLAMAN
+
+6837  IF GS(1)=15 THEN OPLAPLANT
 
 
 
@@ -227,9 +229,9 @@
 # USWAHLMENUE
 # UEBERALL AUSSER EISEN
 # TV:TEMP VALUE
+# OC:OPTION COUNT
 6910 PROC CHOICEMENU
 
-#6915  BX=26:BY=15:BW=12:BH=8:FRAME
 6912  BX=27:BY=20-OC:BW=12:BH=3+OC:FRAME
 
 #     IN ENUE BEFUELLEN
@@ -444,32 +446,81 @@
 
 
 16100 PROC IPLA
-16110  IF ID<3 THEN GS(1)=12+ID: ELSE GS(1)=2
+16105  IF ID=0 THEN OPLABUY:END PROC
+
+
+16110  IF ID > 0 AND ID<3 THEN GS(1)=12+ID: ELSE GS(1)=2
 16112  ID=0
 16114  SCREEN
-16120 END PROC
+16190 END PROC
 
-
-# BUY PLANTATION
+##################
+# BUY PLANTATION #
+##################
 17000 PROC OPLABUY
+17010  GS(1)=12:IL=10:OC=2
 
-17010  TX$="LANTAGE KAUFEN":EXEC BOXWITHTEXT
-17020  CHOICEMENU
+17015  BX=27:BY=5:BW=12:BH=4:FRAME
+17016  PRINT AT(BY+1,BX+1) "ANDPREIS"
+17017  PRINT AT(BY+2,BX+1) "291 "
+
+17020  BX=27:BY=17:BW=12:BH=5:FRAME
+17021  PRINT AT(BY+1,BX+1) TT$(VAL(TX$(PD(0,0),1)));
+17022  PRINT AT(BY+2,BX+1) TT$(VAL(TX$(PD(0,0),2)));
+17023  PRINT AT(BY+3,BX+1) M$(0)
+17024  TAG
 
 17030 END PROC
 
+########################
+
 17100 PROC IPLABUY
-17110  GS(1)=8
-17111  ID=0
-17112  SCREEN
+17102  IF ID<2 THEN OPLAPLANT:END PROC
+
+17110  IF ID=2 THEN GS(1)=8:ID=0:SCREEN:END PROC
 17120 END PROC
 
+#########################
 
-# SELL PLANTATION
+
+
+####################
+# PLANT PLANTATION #
+####################
+17500 PROC OPLAPLANT
+17502  GS(1)=15:OC=0
+
+# SPRITE-NR,BLOCK,COLOR,PRIO,TYPE
+# 1,1,BLACK,DONT SHOW,HIRES
+17510  MOB SET 1,1,0,0,0:MMOB 1,50,50
+17512  MOB SET 2,2,1,0,0:MMOB 2,50,50
+
+17520  REPEAT
+17521   
+17525  UNTIL Q=-1
+
+17599 END PROC
+
+###############
+
+17700 PROC IPLAPLANT
+
+17710  MOB OFF 1:MOB OFF 2
+
+17725  GS(1)=8:ID=0:SCREEN
+
+17799 END PROC
+
+
+###################
+# SELL PLANTATION #
+###################
 18000 PROC OPLASEL
 18010  TX$="LANTAGE VERKAUFEN":EXEC BOXWITHTEXT
 18020  CHOICEMENU
 18099 END PROC
+
+######################
 
 18100 PROC IPLASEL
 18110  GS(1)=8
@@ -478,7 +529,10 @@
 18120 END PROC
 
 
-# MANAGE PLANTATION
+
+#####################
+# MANAGE PLANTATION #
+#####################
 19000 PROC OPLAMAN
 19010  TX$="LANTAGE VERWALTEN":EXEC BOXWITHTEXT
 19020  CHOICEMENU
@@ -542,6 +596,7 @@
 
 58200 PROC FRAME
 58210  INSERT BD$,BY,BX,BW,BH,FB
+58215  FILL BY+1,BX+1,BW-2,BH-2,32,1
 58220  FCOL BY+BH,BX+1,BW,1,11:REM F%(0,ID)
 58225  FCOL BY+1,BX+BW,1,BH,11:REM F%(0,ID)
 58230 END PROC
@@ -599,21 +654,22 @@
 # OF THE ACCORDING ROOM
 
 58479 PROC HANDLEENTER
-58480  IF GS(1)=0 THEN EXEC IHUBEMP:GOTO 58499
-58481  IF GS(1)=1 THEN EXEC IHUBGAL:GOTO 58499
-58482  IF GS(1)=2 THEN EXEC IHUBPLA:GOTO 58499
-58483  IF GS(1)=3 THEN EXEC ITRA:GOTO 58499
-58484  IF GS(1)=4 THEN EXEC IHOT:GOTO 58499
-58485  IF GS(1)=5 THEN EXEC IGAL:GOTO 58499
-58486  IF GS(1)=6 THEN EXEC IBAN:GOTO 58499
-58487  IF GS(1)=7 THEN EXEC IAUC:GOTO 58499
-58488  IF GS(1)=8 THEN EXEC IPLA:GOTO 58499
-58489  IF GS(1)=9 THEN EXEC IWAR:GOTO 58499
-58490  IF GS(1)=10 THEN EXEC IMAR:GOTO 58499
-58491  IF GS(1)=11 THEN EXEC IEXP:GOTO 58499
-58492  IF GS(1)=12 THEN EXEC IPLABUY:GOTO 58499
-58493  IF GS(1)=13 THEN EXEC IPLASEL:GOTO 58499
-58494  IF GS(1)=14 THEN EXEC IPLAMAN:GOTO 58499
+58480  IF GS(1)=0 THEN EXEC IHUBEMP:END PROC
+58481  IF GS(1)=1 THEN EXEC IHUBGAL:END PROC
+58482  IF GS(1)=2 THEN EXEC IHUBPLA:END PROC
+58483  IF GS(1)=3 THEN EXEC ITRA:END PROC
+58484  IF GS(1)=4 THEN EXEC IHOT:END PROC
+58485  IF GS(1)=5 THEN EXEC IGAL:END PROC
+58486  IF GS(1)=6 THEN EXEC IBAN:END PROC
+58487  IF GS(1)=7 THEN EXEC IAUC:END PROC
+58488  IF GS(1)=8 THEN EXEC IPLA:END PROC
+58489  IF GS(1)=9 THEN EXEC IWAR:END PROC
+58490  IF GS(1)=10 THEN EXEC IMAR:END PROC
+58491  IF GS(1)=11 THEN EXEC IEXP:END PROC
+58492  IF GS(1)=12 THEN EXEC IPLABUY:END PROC
+58493  IF GS(1)=13 THEN EXEC IPLASEL:END PROC
+58494  IF GS(1)=14 THEN EXEC IPLAMAN:END PROC
+58495  IF GS(1)=15 THEN EXEC IPLAPLANT:END PROC
 
 58499 END PROC
 
@@ -678,33 +734,81 @@
 
 
 58900 PROC INITMOUSE
-58901  IF PEEK(828)<>$AD THEN PRINT"ADE AUSTREIBER":LOAD"MAUS.DRV",0,0,$0334
-58910  DESIGN 0,$C000
-58912  @BBB.....................
-58914  @BBBBB...................
-58916  @BBBBBBB.................
-58918  @BBBBBBBBB...............
-58920  @BBBBB...................
-58922  @BB..BBB.................
-58924  @B....BBB................
-58926  @......BBB...............
-58928  @.......BB...............
-58930  @........................
-58932  @........................
-58934  @........................
-58936  @........................
-58938  @........................
-58940  @........................
-58942  @........................
-58944  @........................
-58946  @........................
-58948  @........................
+58902  IF PEEK(828)<>$AD THEN PRINT"ADE AUSTREIBER":LOAD"MAUS.DRV",0,0,$0334
+58904  DESIGN 0,$C000
+58906  @BBB.....................
+58907  @BBBBB...................
+58908  @BBBBBBB.................
+58909  @BBBBBBBBB...............
+58910  @BBBBB...................
+58911  @BB..BBB.................
+58912  @B....BBB................
+58913  @......BBB...............
+58914  @.......BB...............
+58915  @........................
+58916  @........................
+58917  @........................
+58918  @........................
+58919  @........................
+58920  @........................
+58921  @........................
+58922  @........................
+58923  @........................
+58924  @........................
+58925  @........................
+58926  @........................
+58930  MOB SET 0,0,15,128,0
+58932  SYS$033C:RLOCMOB0,160,100,0,1
+58934  MOB OFF 0
+
+58935  DESIGN 0,$C000+64*1
+58936  @.BBBBBBBBBBB............
+58937  @BB.........BB...........
+58938  @B.B.......B.B...........
+58939  @B..BBBBBBB..B...........
+58940  @B..B.....B..B...........
+58941  @B..B.....B..B...........
+58942  @B..B.....B..B...........
+58943  @B..B.....B..B...........
+58944  @B..B.....B..B...........
+58945  @B..BBBBBBB..B...........
+58946  @B.B.......B.B...........
+58947  @BB.........BB...........
+58948  @.BBBBBBBBBBB............
+58949  @........................
 58950  @........................
+58951  @........................
 58952  @........................
-58954  MOB SET 0,0,15,128,0
-58956  SYS$033C:RLOCMOB0,160,100,0,1
-58958  MOB OFF 0
-58959 END PROC
+58953  @........................
+58954  @........................
+58955  @........................
+58956  @........................
+
+
+58960  DESIGN 0,$C000+64*2
+58961  @........................
+58962  @..BBBBBBBBB.............
+58963  @.B.BBBBBBB.B............
+58964  @.BB.......BB............
+58965  @.BB.......BB............
+58966  @.BB.......BB............
+58967  @.BB.......BB............
+58968  @.BB.......BB............
+58969  @.BB.......BB............
+58970  @.BB.......BB............
+58971  @.B.BBBBBBB.B............
+58972  @..BBBBBBBBB.............
+58973  @........................
+58974  @........................
+58975  @........................
+58976  @........................
+58977  @........................
+58978  @........................
+58979  @........................
+58980  @........................
+58981  @........................
+
+58999 END PROC
 
 
 # REI RTEN VON TAEDTEN:
