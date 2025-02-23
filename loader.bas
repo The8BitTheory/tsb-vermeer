@@ -1,6 +1,6 @@
 #RetroDevStudio.MetaData.BASIC:2049,BASIC V2,uppercase,10,10
 
-1 TL$="VERMEER 2..."
+1 TL$="VERMEHR - FRISCH GESTRICHEN..."
 2 DN$="V2"
 
 4 IF A=0 THEN DR=PEEK(186)
