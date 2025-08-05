@@ -53,7 +53,6 @@
 1052  DIM M$(35),F%(1,6),BD$,I,I1,DT%(3),DC(11),TR$(13),P(1),SC%(8,1,3),SE%(1,4,3)
 1054  DIM LV%(8,3,2),WK%(8,3,1),PC(8,3,1),PE%(1,3),LQ(3),QE(3),RR(4)
 1056  F=11:FS=12:FB=6:ID=0:MI=0
-1058  T$="":FORX=0TO9:T$=T$+CHR$(X):NEXT
 
 #PD(PLAYER-ID,#): LAYER ATA
 #              0: CURRENT CITY
@@ -89,7 +88,7 @@
 # 8: PLANTATION
 # 9: LAGER MAINMENU (CHOOSE BETWEEN TRANSPORT AND DATES)
 #10: MARKTPLATZ
-#11: EXPEDITION
+#11: -EXPEDITION- REMOVED
 
 #12: BUY PLANTATION
 #13: SELL PLANTATION
@@ -111,14 +110,10 @@
 1342  XM(0)=XM(2)+16:YM(0)=YM(2)+6*8
 1344  XM(1)=XM(0)+21*8:YM(1)=YM(0)+15*8
 
-1479  DT%(0)=31:DT%(1)=12:DT%(2)=1917:DT%(3)=0
 # DC():DAY COUNTS (0=JANUARY, 11=DECEMBER)
 1480  DC(0)=31:DC(1)=28:DC(2)=31:DC(3)=30:DC(4)=31:DC(5)=30
 1481  DC(6)=31:DC(7)=31:DC(8)=30:DC(9)=31:DC(10)=30:DC(11)=31
 
-# LAST-VISIT AND LAST-HARVEST DATA
-# INIT LV%(Y,X) TO -1
-1500  FOR Y=0 TO 3:FOR X = 0 TO 8:LV%(X,Y,2)=-1:NEXT:NEXT
 
 1600  M$(0)="USGANG":M$(1)="EISEN":M$(2)="OTEL":M$(3)="ALERIE"
 1610  M$(4)="ANK":M$(5)="UKTION":M$(6)="ERMINE":M$(7)="RANSPORT"
@@ -158,8 +153,6 @@
 1701 CF$(0)="-####### ":CF$(1)="### HA":CF$(2)="## AGE":CF$(3)="#### T"
 1702 CF$(4)="####.## ":CF$(5)="##.# %"
 
-# CREATE LIST OF AVAILABLE PLANTATION-IDS
-1750 FOR I=0TO179:PA$(0)=PA$(0)+CHR$(I):NEXT
 
 #T$() - GOODS-TRANSPORT DATA
 # USED TO KEEP TRACK OF TRANSPORT PROGRESS OF GOODS (IE FROM PLANTATION TO EMPORIUM)
@@ -325,9 +318,9 @@
 
 
 
-######
-# GENERIC BOX WITH TEXT
-#######
+#########################
+# GENERIC BOX WITH TEXT #
+#########################
 6930 PROC BOXWITHTEXT
 
 6932  BX=1:BY=6:BW=20:BH=5:FRAME
@@ -344,9 +337,9 @@
 # OUTPUT DEALS WITH RENDERING THE SCREEN, BASED ON THE ROOM'S DATA
 
 
-###################
+##############################
 # TADTBILDSCHIRM MPORIUM 0 #
-###################
+##############################
 7000 PROC OHUBEMP
 
 7005  LDCHDR:CAL
@@ -354,9 +347,9 @@
 
 7199 END PROC
 
-###################
+##############################
 # TADTBILDSCHIRM ALLERIE 1 #
-###################
+##############################
 8000 PROC OHUBGAL
 
 8005  LDCHDR:CAL
@@ -365,9 +358,9 @@
 8199 END PROC
 
 
-###################
+##############################
 # TADTBILDSCHIRM LANTAGE 2 #
-###################
+##############################
 
 # TT$() CONTAINS GENERIC TEXTS.
 #       0-4  ARE AVAILABLE PRODUCES
@@ -448,9 +441,9 @@
 
 
 
-###################
+#####################
 # EISEBILDSCHIRM 3 #
-###################
+#####################
 
 # TRAVELCOST (ONDON/NKARA 413
 # TRAVELDURATION (ONDON/NKARA 1.-8.)
@@ -471,17 +464,7 @@
 
 
 10009  CT=PD(CP,0)-6
-10010  IF CT>=0 THEN DO
-#       SET LAST VISIT TO TODAY
-10011   LV%(CT,CP,2)=DT%(3)
-
-#       SET HARVESTS IN THIS CITY OF THIS PLAYER TO ZERO (IF PLANTATION)
-10012   FOR X=0TO1:LV%(CT,CP,X)=0:NEXT
-
-#       SET PENDING WAGES FOR WORKERS TO ZERO
-10013   PC(CT,CP,0)=0
-
-10014  DONE
+10010  IF CT>=0 THEN LLEAVELOC
 
 #      SET DESTINATION CITY AND TRAVEL DAYS LEFT
 10015  PD(CP,2)=ID:LTRADA
@@ -549,9 +532,9 @@
 
 
 
-#########
+###########
 # OTEL 4 #
-#########
+###########
 #  PTIONS
 #  - TAY FOR 7 DAYS
 #  - TAY UNTIL 1ST OF NEXT MONTH
@@ -595,15 +578,7 @@
 
 12244  CT=PD(CP,0)-6
 
-12245  IF CT>=0 THEN DO
-#       SET LAST VISIT TO TODAY
-12246   LV%(CT,CP,2)=DT%(3)
-
-#       SET LASTPRODUCTION TO ZERO
-12247   FORX=0TO1:LV%(CT,CP,X)=0:NEXT
-#       SET PENDING WAGES TO ZERO
-12248   PC(CT,CP,0)=0
-12249  DONE
+12245  IF CT>=0 THEN LLEAVELOC
 
 #      DISPLAY JOURNEY SCREEN
 12250  OJOURNEY
@@ -611,11 +586,27 @@
 12299 END PROC
 
 
+##################
+# LEAVE LOCATION #
+##################
+# THIS BASICALLY RESETS ALL RELATED COUNTERS (DATE, PRODUCTION, PENDING WAGES)
+12300 PROC LLEAVELOC
+
+#       SET LAST VISIT TO TODAY
+12310   LV%(CT,CP,2)=DT%(3)
+
+#       SET LASTPRODUCTION TO ZERO
+12320   FORX=0TO1:LV%(CT,CP,X)=0:NEXT
+#       SET PENDING WAGES TO ZERO
+12330   PC(CT,CP,0)=0
+
+12399 END PROC
 
 
-########
+
+##########
 # ANK 6 #
-########
+##########
 13000 PROC OBAN
 13001  GS(1)=6
 13010  LDCHDR
@@ -631,8 +622,8 @@
 13200  BX=1:BY=15:BW=22:BH=6:FRAME
 
 13210  PRINT AT(BY+1,BX+1) "INSSATZ:";
-13220  PRINT AT(BY+3,BX+1) "REDITE:";
-13230  PRINT AT(BY+4,BX+1) "INSEN :";
+13220  PRINT AT(BY+3,BX+1) "REDITE :";
+13230  PRINT AT(BY+4,BX+1) "INSEN  :";
 
 
 13340  CHOICEMENU
@@ -640,9 +631,9 @@
 13999 END PROC
 
 
-###########
+#############
 # ALERIE 5 #
-###########
+#############
 14000 PROC OGAL
 14001  GS(1)=5
 
@@ -654,9 +645,9 @@
 
 
 
-###########
+#############
 # UKTION 7 #
-###########
+#############
 15000 PROC OAUC
 15001  GS(1)=7
 
@@ -667,9 +658,9 @@
 15040 END PROC
 
 
-############
+##############
 # LANTAGE 8 #
-############
+##############
 16000 PROC OPLA
 16001  GS(1)=8
 
@@ -716,9 +707,9 @@
 
 
 
-##################
+#####################
 # BUY PLANTATION 12 #
-##################
+#####################
 17000 PROC OPLABUY
 17010  GS(1)=12
 
@@ -754,9 +745,9 @@
 
 
 
-####################
+#######################
 # PLANT PLANTATION 15 #
-####################
+#######################
 17500 PROC OPLAPLANT
 17502  GS(1)=15
 
@@ -1513,21 +1504,21 @@
 21159 END PROC
 
 
-##############
+#################
 # XPEDITION 11 #
-##############
-22000 PROC OEXP
-22001  GS(1)=11
+#################
+#22000 PROC OEXP
+#22001  GS(1)=11
 
-22010  LDCHDR
-22020  TX$="XPEDITION":BOXWITHTEXT
-22030  CHOICEMENU
+#22010  LDCHDR
+#22020  TX$="XPEDITION":BOXWITHTEXT
+#22030  CHOICEMENU
 
-22040 END PROC
+#22040 END PROC
 
-22100 PROC IEXP
-22110  HANDLECHOICE
-22120 END PROC
+#22100 PROC IEXP
+#22110  HANDLECHOICE
+#22120 END PROC
 
 ##############
 # OURNEY 99 #
@@ -2353,16 +2344,26 @@
 58937  PE%(Y,X)=LQ(X)*(Y+1)
 58939  NEXT:NEXT
 
+# LAST-VISIT AND LAST-HARVEST DATA
+58940  FOR Y=0TO3:FORX=0TO8:LV%(X,Y,2)=-1:NEXT:NEXT
+
+# CREATE LIST OF AVAILABLE PLANTATION-IDS
+58942  FOR I=0TO179:PA$(0)=PA$(0)+CHR$(I):NEXT
+
+# AVAILABLE TRANSPORT-IDS
+58944  T$="":FORX=0TO9:T$=T$+CHR$(X):NEXT
+
+58946 DT%(0)=31:DT%(1)=12:DT%(2)=1917:DT%(3)=0
 
 #     PLAYER STARTS IN ONDON
-58940  PD(CP,0)=1:PD(CP,1)=50000
+58970  PD(CP,0)=1:PD(CP,1)=50000
 #1017  PD(CP,0)=6:PD(CP,1)=50000
 
 
-58945  GS(0)=CP:GS(1)=0
+58975  GS(0)=CP:GS(1)=0
 
 
-58950  LADVDAY
+58980  LADVDAY
 
 
 58999 END PROC
