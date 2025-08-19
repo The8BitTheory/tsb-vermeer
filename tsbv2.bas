@@ -439,10 +439,14 @@
 # UCTION CTION #
 ##################
 8300 PROC AUCTION
+8305  FSB:BX=2:BY=2:BW=36:BH=21:FRAME
 
-8301  GS(1)=98:LV=2
-8302  LOAD"NY",USE,0
-8320  END
+
+
+
+8390  GS(1)=98:LV=2
+8395  LOAD"NY",USE,0
+8399  END
 
 
 ##############################
