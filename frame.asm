@@ -4,7 +4,7 @@
 
 !to "frame.bin.prg",cbm
 
-fr          =   8   ;frame index. needs to be parsed from SYS parameter
+;fr          =   0   ;frame index. needs to be parsed from SYS parameter
 
 helpvec     =   $b0
 ; y=1,x=1,w=26,h=3
@@ -13,24 +13,32 @@ spalteanf   =   $C5E0
 spaltenanz  =   $C5E1
 zeilenanz   =   $C5E2
 
+chrget      =   $0073
+
 basromaus   =   $8e5f
 basromein   =   $8e3a
 ;l20pl40     =   $8dd6
 
 mve9a       =   $9ecb
 
-mkbox       =   $a158
 movez       =   $a0b1
-;mkline      =   $a052
-;fillmt      =   $a084
+mkbox       =   $a158
+chkcom      =   $aefd
+frestr      =   $b63a
+getbyt      =   $b79e
 
+chkcommaint =   $e200
 bsout       =   $ffd2
 
 ; calculate absolute address of frame index offsets
+
+    jsr chkcommaint
+    stx fr
+
     clc
     lda fa
-    adc #fr
-    adc #fr
+    adc fr
+    adc fr
     sta f2
     lda fa+1
     adc #0
@@ -54,7 +62,14 @@ bsout       =   $ffd2
 
 ; get frame coordinates
     ldy #0
+    sty baseY
+    sty baseX
     jsr loadCoordinates ;increases y by 2
+    lda tempY
+    sta baseY
+    lda tempX
+    sta baseX
+    
     lda (f2),y
     sta spaltenanz
     sta tempW
@@ -227,6 +242,7 @@ cpr
     
     ;load pointer to text constant into f4
     ;pointer address = tempIndex*3
+cprWork
     clc
     adc tempIndex
     adc tempIndex
@@ -239,8 +255,8 @@ cpr
     
     ; jump to constant print handling (same as for vpr)
     clc         ;clear carry flag to indicate setting cursor position
-    ldy tempY   ;y contains row
-    ldx tempX   ;x contains col                
+    ldy tempX   ;y-reg contains col
+    ldx tempY   ;x-reg contains row
     jsr $fff0   ;set cursur position
     
     
@@ -282,9 +298,15 @@ cpr
 ; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
 vpr
     jsr loadCoordinates
-
-    lda (f2),y  ;load index of variable-array
-    sta vx
+    iny ;skip the vx byte
+;    lda (f2),y  ;load index of variable-array
+;    sta vx
+    jsr chkcommaint
+    txa
+    sta tempIndex
+    jmp cprWork
+    
+    
 
     ; iterate variable array to given index and extract the value into tx
     ; sta tx
@@ -299,8 +321,6 @@ vpr
 
     ;PRINT AT(BY+CY,BX+CX) MP$;
     
-
-    jmp incBy4
 
 ; USE AT(). prints a numeric value from VX() with a given CF$ index
 vus
@@ -335,11 +355,15 @@ vus
     rts
 
 loadCoordinates
+    clc
     lda (f2),y
+    adc baseY
     sta zeileanf
     sta tempY
     iny
+    clc
     lda (f2),y
+    adc baseX
     sta spalteanf
     sta tempX
     iny
@@ -353,11 +377,14 @@ f4 = $fd
 fb = 6 ; foreground border
 sb = 11; shadow border
 
+fr        !byte 0
 ; stores x,y,w,h because we need them several times
-tempY  !byte 0
-tempX  !byte 0
-tempW  !byte 0
-tempH  !byte 0
+baseY     !byte 0
+baseX     !byte 0
+tempY     !byte 0
+tempX     !byte 0
+tempW     !byte 0
+tempH     !byte 0
 
 tempIndex !byte 0
 
