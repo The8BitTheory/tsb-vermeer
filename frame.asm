@@ -2,11 +2,9 @@
 
 *= $c000
 
-;!to "frame.bin.prg"
+!to "frame.bin.prg",cbm
 
-!ct pet
-
-fr          =   1   ;frame index. needs to be parsed from SYS parameter
+fr          =   8   ;frame index. needs to be parsed from SYS parameter
 
 helpvec     =   $b0
 ; y=1,x=1,w=26,h=3
@@ -25,6 +23,8 @@ mkbox       =   $a158
 movez       =   $a0b1
 ;mkline      =   $a052
 ;fillmt      =   $a084
+
+bsout       =   $ffd2
 
 ; calculate absolute address of frame index offsets
     clc
@@ -179,14 +179,9 @@ movez       =   $a0b1
     ; write color value to calculated addresses
     lda #sb
     jsr mve9a
-
-
+    
     jsr basromein
     
-    rts
-
-    
-
     ; increase layout data offset by 4 (that's how long data for a frame is)
 incBy4
     clc
@@ -205,8 +200,9 @@ checkNext
     ldy #0
     lda (f2),y
 
-    beq .done   ; zero means no more layout data for this frame
-    iny
+    bne +
+    jmp .done   ; zero means no more layout data for this frame
++   iny
 
     cmp #1
     beq cpr
@@ -225,12 +221,63 @@ checkNext
 cpr
     jsr loadCoordinates
     
-    lda (f2),y  ;load index of text constant
-    sta tx
-
+    ;load index of text constant
+    lda (f2),y  
+    sta tempIndex
+    
+    ;load pointer to text constant into f4
+    ;pointer address = tempIndex*3
+    clc
+    adc tempIndex
+    adc tempIndex
+    adc tc        ; add offset to text-constants
+    sta f4
+    
+    lda tc+1
+    adc #0
+    sta f4+1
+    
     ; jump to constant print handling (same as for vpr)
+    clc         ;clear carry flag to indicate setting cursor position
+    ldy tempY   ;y contains row
+    ldx tempX   ;x contains col                
+    jsr $fff0   ;set cursur position
+    
+    
+    ; get text data from constants
+    ldy #0    
+    lda (f4),y    ; load length of text
+    pha           ; store to stack
+    
+    iny
+    lda (f4),y    ; pointer low-byte offset
+    tax           ; store to X temporary
+    iny
+    lda (f4),y    ; pointer high-byte offset
+    tay           ; store to y temporary
+    
+    clc
+    txa           ; get offset low-byte
+    adc tc        ; add base-address low-byte
+    sta f4        ; store as new offset low-byte 
+    
+    tya           ; get offset high-byte
+    adc tc+1      ; add base-address high-byte
+    sta f4+1      ; store as new offset high-byte
+
+    pla           ; pull length from stack
+    tax           ; write to X
+
+    ; read char into A and call BSOUT
+    ldy #0
+-   lda (f4),y
+    jsr bsout
+    iny
+    dex
+    bne -
 
     jmp incBy4
+    
 
 ; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
 vpr
@@ -299,8 +346,10 @@ loadCoordinates
     rts
 
 fa !word $7c00 ;address where the binary frame data is stored. either parse from SYS or POKE
-;f2  !word 0 ;absolute address pointing to the offset of the layout data
+tc !word $0400 ;address where the binary text constants are stored. either parse from SYS or POKE
+
 f2 = $fb
+f4 = $fd
 fb = 6 ; foreground border
 sb = 11; shadow border
 
@@ -310,7 +359,8 @@ tempX  !byte 0
 tempW  !byte 0
 tempH  !byte 0
 
-tx !byte 0
+tempIndex !byte 0
+
 cf !byte 0
 vx !byte 0
 
