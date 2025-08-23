@@ -14,3 +14,7 @@ errortest.prg
 errortest.bas
 compo.reu
 art.d64
+memhook.inc
+tsb.neo.prg
+tsbneo.asm
+tsbneo.prg
