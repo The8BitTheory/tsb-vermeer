@@ -18,6 +18,7 @@ mve9a       =   $9ecb
 
 movez       =   $a0b1
 mkbox       =   $a158
+use2        =   $a35a
 use3        =   $a3bd
 
 chkcommaint =   $e200
@@ -256,8 +257,6 @@ vpr
 ; USE AT(). prints a numeric value from parameter with a given CF$ index
 vus
     jsr loadCoordinates
-
-    jsr basromaus
     
     lda (f2),y
     tax
@@ -266,17 +265,17 @@ vus
     jsr prepareForPrint
     
     stx $69 ;store length to x
+    
+    jsr basromaus
     ldx f4
     ldy f4+1
-    
     ; call TSB's use3
-    ; .A contains length of ctrl string
+    ; $69 contains length of ctrl string
     ; .X contains LB
     ; .Y contains HB
 
     jsr use3
     jsr basromein
-    
 
     ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
     
@@ -394,7 +393,6 @@ tempW     !byte 0
 tempH     !byte 0
 
 tempIndex !word 0
-D
 
 ;border !byte 111,183,112,180,32,170,108,187,188
 
