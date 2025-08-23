@@ -4,28 +4,21 @@
 
 !to "frame.bin.prg",cbm
 
-;fr          =   0   ;frame index. needs to be parsed from SYS parameter
-
 helpvec     =   $b0
-; y=1,x=1,w=26,h=3
+  
 zeileanf    =   $C5DF
 spalteanf   =   $C5E0
 spaltenanz  =   $C5E1
 zeilenanz   =   $C5E2
 
-chrget      =   $0073
-
 basromaus   =   $8e5f
 basromein   =   $8e3a
-;l20pl40     =   $8dd6
 
 mve9a       =   $9ecb
 
 movez       =   $a0b1
 mkbox       =   $a158
-chkcom      =   $aefd
-frestr      =   $b63a
-getbyt      =   $b79e
+use3        =   $a3bd
 
 chkcommaint =   $e200
 bsout       =   $ffd2
@@ -238,28 +231,110 @@ cpr
     
     ;load index of text constant
     lda (f2),y  
-    sta tempIndex
+
+printIndexAt
+    jsr prepareForPrint
+
+    ; read char into A and call BSOUT
+    ldy #0
+-   lda (f4),y
+    jsr bsout
+    iny
+    dex
+    bne -
+
+    jmp incBy4
+    
+
+; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
+vpr
+    jsr loadCoordinates
+    ;iny ;skip the vx byte
+;    lda (f2),y  ;load index of variable-array
+;    sta vx
+    jsr chkcommaint
+    txa
+    jmp printIndexAt
+    
+    
+    
+    
+
+; USE AT(). prints a numeric value from parameter with a given CF$ index
+vus
+    jsr loadCoordinates
+
+    lda (f2),y
+    tax
+    lda cfIndex,x
+
+    jsr prepareForPrint
+    
+    stx $69 ;store length to x
+    ldx f4
+    ldy f4+1
+    
+    ; call TSB's use3
+    ; .A contains length of ctrl string
+    ; .X contains LB
+    ; .Y contains HB
+    jsr basromaus
+    jsr use3
+    jsr basromein
+    
+
+    ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
+    
+    clc
+    lda f2
+    adc #5
+    sta f2
+    bcc +
+    inc f2+1
++   jmp checkNext
+
+
+; we're done. clear carry (to indicate that everything worked out fine) and return
+.done
+    clc
+    rts
+    
+prepareForPrint
+; takes the value from .A and multiplies by 3. store to f4
+;  that's where length and string pointer are stored
+
+    ldx #0
+    stx tempIndex+1
     
     ;load pointer to text constant into f4
     ;pointer address = tempIndex*3
-cprWork
+    ldx #2
+    sta tempIndex
+-   clc
+    adc tempIndex
+;    sta tempIndex
+    bcc +
+    inc tempIndex+1
++   dex
+    bne -
+    sta tempIndex
+    
     clc
-    adc tempIndex
-    adc tempIndex
     adc tc        ; add offset to text-constants
     sta f4
     
     lda tc+1
-    adc #0
+    adc tempIndex+1
     sta f4+1
     
     ; jump to constant print handling (same as for vpr)
     clc         ;clear carry flag to indicate setting cursor position
     ldy tempX   ;y-reg contains col
     ldx tempY   ;x-reg contains row
-    jsr $fff0   ;set cursur position
+    jsr $fff0   ;set cursor position
     
-    
+; stores the pointer to the text constant into f4
+;  length of the constant is stored to .X
     ; get text data from constants
     ldy #0    
     lda (f4),y    ; load length of text
@@ -283,75 +358,7 @@ cprWork
 
     pla           ; pull length from stack
     tax           ; write to X
-
-    ; read char into A and call BSOUT
-    ldy #0
--   lda (f4),y
-    jsr bsout
-    iny
-    dex
-    bne -
-
-    jmp incBy4
     
-
-; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
-vpr
-    jsr loadCoordinates
-    iny ;skip the vx byte
-;    lda (f2),y  ;load index of variable-array
-;    sta vx
-    jsr chkcommaint
-    txa
-    sta tempIndex
-    jmp cprWork
-    
-    
-
-    ; iterate variable array to given index and extract the value into tx
-    ; sta tx
-
-    ; create temporary string descriptor that points into text constants
-
-    ; calculate absolute y and x positions (framepos + itempos)
-    ; poke length into MP$ descriptor
-    ; PT=TC+TX*3:TL=PEEK(PT):POKEMA,TL
-    ; write value from textconsts at tx into MP$
-    ;D!POKE$5A,TC+D!PEEK(PT+1):D!POKE$58,MP:POKE781,1:POKE782,TL:SYS $A3EC
-
-    ;PRINT AT(BY+CY,BX+CX) MP$;
-    
-
-; USE AT(). prints a numeric value from VX() with a given CF$ index
-vus
-    jsr loadCoordinates
-
-    lda (f2),y
-    sta cf
-    iny
-    lda (f2),y
-    sta vx
-
-    ; iterate variable array to given index and extract the  value 
-
-    ; calculate absolute y and x positions (framepos + itempos)
-
-    ; get correct CF$ entry
-
-    ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
-    
-    clc
-    lda f2
-    adc #5
-    sta f2
-    bcc +
-    inc f2+1
-+   jmp checkNext
-
-
-; we're done. clear carry (to indicate that everything worked out fine) and return
-.done
-    clc
     rts
 
 loadCoordinates
@@ -369,8 +376,8 @@ loadCoordinates
     iny
     rts
 
-fa !word $7c00 ;address where the binary frame data is stored. either parse from SYS or POKE
-tc !word $0400 ;address where the binary text constants are stored. either parse from SYS or POKE
+fa !word $0400 ;address where the binary frame data is stored. either parse from SYS or POKE
+tc !word $7a00 ;address where the binary text constants are stored. either parse from SYS or POKE
 
 f2 = $fb
 f4 = $fd
@@ -386,10 +393,12 @@ tempX     !byte 0
 tempW     !byte 0
 tempH     !byte 0
 
-tempIndex !byte 0
-
-cf !byte 0
-vx !byte 0
+tempIndex !word 0
 
 border !byte 188,187,108,170,32,180,112,183,111
 ;border !byte 111,183,112,180,32,170,108,187,188
+
+; these are the indices in textconstants
+cfIndex   !byte 88,89,90,91,92,93,94
+
+
