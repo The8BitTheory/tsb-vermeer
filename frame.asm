@@ -1,6 +1,6 @@
 ;6502 assembly
 
-*= $c000
+*= $7800
 
 !to "frame.bin.prg",cbm
 
@@ -139,16 +139,16 @@ bsout       =   $ffd2
     adc tempH         ;add height
     sta zeileanf      ;store y
     
-    clc
+;    clc
     lda tempX         ;load x
     adc #1            ;add 1
     sta spalteanf     ;store x
     
-    clc
+;    clc
     lda tempW         ;load width
     sta spaltenanz    ;store width
     
-    clc
+;    clc
     lda #1            ;load height
     sta zeilenanz     ;store height
     
@@ -167,16 +167,16 @@ bsout       =   $ffd2
     adc #1            ;add 1
     sta zeileanf      ;store y
     
-    clc
+;    clc
     lda tempX         ;load x
     adc tempW         ;add width
     sta spalteanf     ;store x
     
-    clc
+;    clc
     lda #1            ;load 1
     sta spaltenanz    ;store width
     
-    clc
+;    clc
     lda tempH         ;load height
     sta zeilenanz     ;store height
     
@@ -195,6 +195,7 @@ incBy4
     clc
     lda f2
     adc #4
+incByZ
     sta f2
     bcc checkNext
     inc f2+1
@@ -209,7 +210,7 @@ checkNext
     lda (f2),y
 
     bne +
-    jmp .done   ; zero means no more layout data for this frame
+    rts   ; zero means no more layout data for this frame
 +   iny
 
     cmp #1
@@ -221,8 +222,7 @@ checkNext
     cmp #3
     beq vus
 
-    ; invalid value. set carry flag and leave (that shows something went wrong)
-    sec
+    ; invalid value. leave. todo: throw syntax error or something like that
     rts
 
 ; PRINT AT(). prints from the textconsts file with a constant index to constant coordinates
@@ -232,16 +232,7 @@ cpr
     ;load index of text constant
     lda (f2),y  
 
-printIndexAt
-    jsr prepareForPrint
-
-    ; read char into A and call BSOUT
-    ldy #0
--   lda (f4),y
-    jsr bsout
-    iny
-    dex
-    bne -
+    jsr printIndexAt
 
     jmp incBy4
     
@@ -249,21 +240,25 @@ printIndexAt
 ; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
 vpr
     jsr loadCoordinates
-    ;iny ;skip the vx byte
-;    lda (f2),y  ;load index of variable-array
-;    sta vx
+
     jsr chkcommaint
     txa
-    jmp printIndexAt
     
+    jsr printIndexAt
     
-    
+;incBy3
+    clc
+    lda f2
+    adc #3
+    jmp incByZ
     
 
 ; USE AT(). prints a numeric value from parameter with a given CF$ index
 vus
     jsr loadCoordinates
 
+    jsr basromaus
+    
     lda (f2),y
     tax
     lda cfIndex,x
@@ -278,25 +273,27 @@ vus
     ; .A contains length of ctrl string
     ; .X contains LB
     ; .Y contains HB
-    jsr basromaus
+
     jsr use3
     jsr basromein
     
 
     ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
     
-    clc
-    lda f2
-    adc #5
-    sta f2
-    bcc +
-    inc f2+1
-+   jmp checkNext
+    jmp incBy4
 
 
-; we're done. clear carry (to indicate that everything worked out fine) and return
-.done
-    clc
+printIndexAt
+    jsr prepareForPrint
+
+    ; read char into A and call BSOUT
+    ldy #0
+-   lda (f4),y
+    jsr bsout
+    iny
+    dex
+    bne -
+    
     rts
     
 prepareForPrint
@@ -312,7 +309,6 @@ prepareForPrint
     sta tempIndex
 -   clc
     adc tempIndex
-;    sta tempIndex
     bcc +
     inc tempIndex+1
 +   dex
@@ -329,8 +325,8 @@ prepareForPrint
     
     ; jump to constant print handling (same as for vpr)
     clc         ;clear carry flag to indicate setting cursor position
-    ldy tempX   ;y-reg contains col
-    ldx tempY   ;x-reg contains row
+    ldy spalteanf   ;y-reg contains col
+    ldx zeileanf   ;x-reg contains row
     jsr $fff0   ;set cursor position
     
 ; stores the pointer to the text constant into f4
@@ -388,17 +384,22 @@ fr        !byte 0
 ; stores x,y,w,h because we need them several times
 baseY     !byte 0
 baseX     !byte 0
+
+
 tempY     !byte 0
 tempX     !byte 0
+
+;used for frame fill and shadows to keep original values of frame's width and height
 tempW     !byte 0
 tempH     !byte 0
 
 tempIndex !word 0
+D
 
-border !byte 188,187,108,170,32,180,112,183,111
 ;border !byte 111,183,112,180,32,170,108,187,188
 
 ; these are the indices in textconstants
 cfIndex   !byte 88,89,90,91,92,93,94
 
 
+border !byte 188,187,108,170,32,180,112,183,111
