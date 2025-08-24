@@ -1,6 +1,6 @@
 ;6502 assembly
 
-*= $7800
+*= $7700
 
 !to "frame.bin.prg",cbm
 
@@ -24,6 +24,12 @@ use3        =   $a3bd
 chkcommaint =   $e200
 bsout       =   $ffd2
 
+
+    jmp frame
+    jmp cpx
+    jmp setup
+
+frame
 ; calculate absolute address of frame index offsets
 
     jsr chkcommaint
@@ -280,7 +286,20 @@ vus
     ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
     
     jmp incBy4
-
+    
+setup
+    
+    
+cpx
+    ;pt=tc+tx*3:tl=peek(pt):pokema,tl
+    ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
+    ; read constant index from parameter
+    jsr chkcommaint
+    stx zeileanf
+    jsr chkcommaint
+    stx spalteanf
+    jsr chkcommaint
+    txa
 
 printIndexAt
     jsr prepareForPrint
@@ -400,4 +419,4 @@ tempIndex !word 0
 cfIndex   !byte 88,89,90,91,92,93,94
 
 
-border !byte 188,187,108,170,32,180,112,183,111
+border !byte 124,123,108,106,32,116,112,119,111
