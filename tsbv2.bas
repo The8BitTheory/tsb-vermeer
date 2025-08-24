@@ -2993,8 +2993,8 @@
 59060  OPEN 1,USE,3,"TRAVEL,S,R":FOR X=0 TO 13:L=14-X:TR$(X)="":REPEAT
 59070  GET#1,A$:TR$(X)=TR$(X)+A$:L=L-1:UNTIL L<1:PRINT ".";:NEXT:CLOSE 1:PRINT
 
-59090  MP$="                                        "
-59091  MA=.*LEN(MP$)+D!PEEK(71):MP=D!PEEK(MA+1)
+#59090  MP$="                                        "
+#59091  MA=.*LEN(MP$)+D!PEEK(71):MP=D!PEEK(MA+1)
 
 59099 END PROC
 
