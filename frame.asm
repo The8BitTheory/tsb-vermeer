@@ -26,7 +26,7 @@ bsout       =   $ffd2
 
 
     jmp frame
-    jmp cpx
+    jmp printConstant
     jmp setup
 
 frame
@@ -288,9 +288,9 @@ vus
     jmp incBy4
     
 setup
+    rts
     
-    
-cpx
+printConstant
     ;pt=tc+tx*3:tl=peek(pt):pokema,tl
     ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
     ; read constant index from parameter
@@ -417,6 +417,5 @@ tempIndex !word 0
 
 ; these are the indices in textconstants
 cfIndex   !byte 88,89,90,91,92,93,94
-
 
 border !byte 124,123,108,106,32,116,112,119,111
