@@ -28,6 +28,7 @@ bsout       =   $ffd2
     jmp frame
     jmp printConstant
     jmp setup
+    jmp readkeys
 
 frame
 ; calculate absolute address of frame index offsets
@@ -419,3 +420,6 @@ tempIndex !word 0
 cfIndex   !byte 88,89,90,91,92,93,94
 
 border !byte 124,123,108,106,32,116,112,119,111
+
+!source "auction.asm"
+
