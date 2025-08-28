@@ -1,7 +1,8 @@
-
+;*=$c000
 
 readkeys
 !zone auction
+
   ; pfeil-links (pa7, pb1)
   ; pfeil-hoch (pa6, pb6)
   ; return (pa0, pb1)
@@ -41,6 +42,9 @@ selectColumn
   lsr $fc  
   dex
   bpl selectColumn
+
+  lda #%11111111
+  sta $dc00
 
   cli             ; Interrupts wieder zulassen
   rts             ; Rücksprung BASIC

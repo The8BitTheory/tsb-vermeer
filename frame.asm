@@ -22,6 +22,7 @@ use2        =   $a35a
 use3        =   $a3bd
 
 chkcommaint =   $e200
+;chkcommaint =   $8b89
 bsout       =   $ffd2
 
 
@@ -423,3 +424,4 @@ border !byte 124,123,108,106,32,116,112,119,111
 
 !source "auction.asm"
 
+!source "loadfromreu.asm"
