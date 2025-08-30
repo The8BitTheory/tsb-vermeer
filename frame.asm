@@ -307,6 +307,7 @@ printIndexAt
     jsr prepareForPrint
 
     ; read char into A and call BSOUT
+    ; for REU, f4 would be replaced with dedicated address $C64D, for example
     ldy #0
 -   lda (f4),y
     jsr bsout
@@ -317,7 +318,7 @@ printIndexAt
     rts
     
 prepareForPrint
-; takes the value from .A and multiplies by 3. store to f4
+; takes the value from .A (the text index) and multiplies by 3. store to f4
 ;  that's where length and string pointer are stored
 
     ldx #0
@@ -375,6 +376,11 @@ prepareForPrint
     pla           ; pull length from stack
     tax           ; write to X
     
+; f4 could be a reference to REU memory.
+; then we could copy the string to a dedicated RAM location at this point
+; f4 would receive the dedicated RAM location afterwards
+; the routine printIndexAt would then always just use a fixed read location
+; $C64D is an area with 256 bytes available, that would be a good candidate for that
     rts
 
 loadCoordinates
@@ -424,4 +430,4 @@ border !byte 124,123,108,106,32,116,112,119,111
 
 !source "auction.asm"
 
-!source "loadfromreu.asm"
+;!source "loadfromreu.asm"
