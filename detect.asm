@@ -6,6 +6,7 @@ REUCOMMAND          = $df01         ;Befehlsregister
 
 jmp checkForREU
 jmp checkForMega65
+;jmp dmaCopy
 
 
 ;*******************************************************************************
@@ -45,10 +46,10 @@ checkForMega65
   lda #1
   sta $d000
   
-  lda #$47
+  lda #$47      ;(dec 71) "G"
   sta $d02f
   
-  lda #$53
+  lda #$53      ;(dec 83) "S"
   sta $d02f
   
   lda #0
@@ -62,3 +63,5 @@ checkForMega65
   
   ldy #0
   rts
+  
+;!source "megadma.asm"

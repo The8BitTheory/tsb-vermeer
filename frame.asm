@@ -29,8 +29,8 @@ bsout       =   $ffd2
     jmp frame
     jmp printConstant
     jmp setup
-    jmp readkeys
-    jmp checkForREU
+    jmp readkeys        ;auction
+    jmp dmaCopy         ;mega65
 
 frame
 ; calculate absolute address of frame index offsets
@@ -431,4 +431,6 @@ border !byte 124,123,108,106,32,116,112,119,111
 
 !source "auction.asm"
 
-!source "loadfromreu.asm"
+;!source "loadfromreu.asm"
+
+!source "megadma.asm"

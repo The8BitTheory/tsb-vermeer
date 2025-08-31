@@ -87,36 +87,4 @@ loadFromReu
 
 
 
-!zone checkForREU
-
-;*******************************************************************************
-;*** Prüfen, ob eine REU angeschlossen ist. 
-;*** Um auch die 1700 zu erkennen wird NICHT so, wie auf der 1764 Demo-Disk mit
-;*** #$00 geprüft. Bei der 1700 kann $df00 den Wert #$00 annehmen!!
-;*******************************************************************************
-;*** Übergabe: -
-;*******************************************************************************
-;*** Rückgabe: Y = 0 REU vorhanden, sonst nicht!
-;*******************************************************************************
-;*** ändert  : A, X, Y, SR
-;*******************************************************************************
-checkForREU
- ldy #$ff                           ;Erstmal von keiner REU ausgehen
- lda REUSTATUS                      ;Status-Register lesen, um Bit 7-5 zu löschen
- sty REUSTATUS                      ;schreiben wir zum Test mal #$ff hinein
- cpy REUSTATUS                      ;und schauen, ob der Wert erhalten bleibt
- beq .exit                          ;wenn JA, KEINE REU!!!
- ldx #$04                           ;Wir testen nur Register 2-5 
-.loop
- txa
- sta REUCOMMAND,X                   ;Testwert speichern
- cmp REUCOMMAND,X                   ;gleicher Wert?
- bne .exit                          ;wenn nicht, KEINE REU!!!
- dex                                ;Schleifenzähler verringern
- bne .loop                          ;wenn > 0, nochmal
- ldy #$00                           ;sonst wurde eine REU gefunden
-.exit
- rts                                ;zurück
- 
- 
  
