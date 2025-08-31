@@ -13,18 +13,14 @@ getadr      = $b7f7
 
 dmaCopy
   ; parse parameters (count, source, dest)
-  ;jsr basromaus
-  
-  ;jsr sgetadrc
   jsr chkcom
-  jsr frmnum            ;$64/$65 (but in HB,LB)
+  jsr frmnum
   jsr getadr
   lda $14
   sta .dmalistCount
   lda $15
   sta .dmalistCount+1
   
-  ;jsr sgetadrc
   jsr chkcom
   jsr frmnum
   jsr getadr
@@ -33,12 +29,9 @@ dmaCopy
   lda $15
   sta .dmalistSourceAddr+1
   
-  ;jsr basromein
   jsr chkcommaint
   stx .dmalistSourceBank
-  ;jsr basromaus
   
-  ;jsr sgetadrc
   jsr chkcom
   jsr frmnum
   jsr getadr
@@ -47,7 +40,6 @@ dmaCopy
   lda $15
   sta .dmalistDestAddr+1
   
-  ;jsr basromein
   jsr chkcommaint
   stx .dmalistDestBank
   
