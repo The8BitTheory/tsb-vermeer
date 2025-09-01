@@ -59,9 +59,8 @@ checkForMega65
   cmp #1
   bne .exit
   
-  
-  
   ldy #0
+  sty $d02f
   rts
   
 ;!source "megadma.asm"
