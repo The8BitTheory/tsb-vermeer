@@ -11,7 +11,15 @@ chkcommaint = $e200
 frmnum      = $ad8a
 getadr      = $b7f7
 
+knock
+  lda #$47      ;(dec 71) "G"
+  sta $d02f  
+  lda #$53      ;(dec 83) "S"
+  sta $d02f
+  rts
+
 dmaCopy
+
   ; parse parameters (count, source, dest)
   jsr chkcom
   jsr frmnum

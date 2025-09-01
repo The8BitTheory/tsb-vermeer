@@ -31,6 +31,7 @@ bsout       =   $ffd2
     jmp setup
     jmp readkeys        ;auction
     jmp dmaCopy         ;mega65
+    jmp knock           ;mega65
 
 frame
 ; calculate absolute address of frame index offsets

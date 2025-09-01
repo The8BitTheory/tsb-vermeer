@@ -1,8 +1,7 @@
 ;*=$c000
 
-readkeys
 !zone auction
-
+readkeys
   ; pfeil-links (pa7, pb1)
   ; pfeil-hoch (pa6, pb6)
   ; return (pa0, pb1)
