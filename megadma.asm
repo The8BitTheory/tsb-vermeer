@@ -11,14 +11,15 @@ chkcommaint = $e200
 frmnum      = $ad8a
 getadr      = $b7f7
 
-knock
+knockVic4
   lda #$47      ;(dec 71) "G"
   sta $d02f  
   lda #$53      ;(dec 83) "S"
   sta $d02f
   rts
-
+  
 dmaCopy
+  jsr knockVic4
 
   ; parse parameters (count, source, dest)
   jsr chkcom
@@ -62,6 +63,10 @@ dmaCopy
   
   lda #<.dmalist
   sta dma_lbx
+
+knockVic2  
+  lda #0
+  sta $d02f
 
   rts
   
