@@ -311,6 +311,7 @@ printIndexAt
 
     ; read char into A and call BSOUT
     ; for REU, f4 would be replaced with dedicated address $C64D, for example
+    ; indexed reading by x instead of y
     ldy #0
 -   lda (f4),y
     jsr bsout
@@ -401,8 +402,9 @@ loadCoordinates
     iny
     rts
 
-fa !word $0400 ;address where the binary frame data is stored. either parse from SYS or POKE
-tc !word $7a00 ;address where the binary text constants are stored. either parse from SYS or POKE
+fa        !word $0400 ;address where the binary frame data is stored. todo: parse from SYS or POKE
+tc        !word $7a00 ;address where the binary text constants are stored. todo: parse from SYS or POKE
+memloc    !word $c64d ;temporary 256 byte working area for dma.
 
 f2 = $fb
 f4 = $fd
@@ -414,7 +416,6 @@ fr        !byte 0
 baseY     !byte 0
 baseX     !byte 0
 
-
 tempY     !byte 0
 tempX     !byte 0
 
@@ -424,12 +425,12 @@ tempH     !byte 0
 
 tempIndex !word 0
 
-;border !byte 111,183,112,180,32,170,108,187,188
-
 ; these are the indices in textconstants
 cfIndex   !byte 88,89,90,91,92,93,94
 
-border !byte 124,123,108,106,32,116,112,119,111
+border    !byte 124,123,108,106,32,116,112,119,111
+
+
 
 !source "auction.asm"
 
