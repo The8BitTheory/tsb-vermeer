@@ -1,0 +1,748 @@
+
+; ******** Source: d:\c64\ver2\ver2\src\frame.asm
+     1                          ;6502 assembly
+     2                          
+     3                          *= $7700
+     4                          
+     5                          !to "frame.bin.prg",cbm
+     6                          
+     7                          helpvec     =   $b0
+     8                            
+     9                          zeileanf    =   $C5DF
+    10                          spalteanf   =   $C5E0
+    11                          spaltenanz  =   $C5E1
+    12                          zeilenanz   =   $C5E2
+    13                          
+    14                          basromaus   =   $8e5f
+    15                          basromein   =   $8e3a
+    16                          
+    17                          mve9a       =   $9ecb
+    18                          
+    19                          movez       =   $a0b1
+    20                          mkbox       =   $a158
+    21                          use2        =   $a35a
+    22                          use3        =   $a3bd
+    23                          
+    24                          chkcommaint =   $e200
+    25                          ;chkcommaint =   $8b89
+    26                          bsout       =   $ffd2
+    27                          
+    28                          
+    29  7700 4c1577                 jmp frame
+    30  7703 4cc278                 jmp printConstant
+    31  7706 4c8278                 jmp setup
+    32  7709 4cc679                 jmp readkeys        ;auction
+    33  770c 4c0d7a                 jmp dmaCopy         ;mega65
+    34  770f 4c027a                 jmp knockVic4           ;mega65
+    35  7712 4c697a                 jmp knockVic2
+    36                          
+    37                          frame
+    38                          ; calculate absolute address of frame index offsets
+    39                          
+    40  7715 2000e2                 jsr chkcommaint
+    41  7718 8ead79                 stx fr
+    42                          
+    43  771b 18                     clc
+    44  771c ada579                 lda fa
+    45  771f 6dad79                 adc fr
+    46  7722 6dad79                 adc fr
+    47  7725 8da779                 sta f2
+    48  7728 ada679                 lda fa+1
+    49  772b 6900                   adc #0
+    50  772d 8da879                 sta f2+1
+    51                              
+    52                              ; copy index data (2 bytes) from reu to ram
+    53  7730 a902                   lda #2
+    54  7732 a200                   ldx #0
+    55  7734 207c79                 jsr .fromReuF2ToMemloc
+    56                          
+    57                          ; calculate layout data address by reading the offset and then adding it to fa
+    58  7737 a000                   ldy #0
+    59  7739 b1fb                   lda (memloc),y
+    60  773b aa                     tax
+    61  773c c8                     iny
+    62  773d b1fb                   lda (memloc),y
+    63  773f 48                     pha
+    64  7740 c8                     iny
+    65  7741 18                     clc
+    66  7742 8a                     txa
+    67  7743 6da579                 adc fa
+    68  7746 8da779                 sta f2
+    69  7749 68                     pla
+    70  774a 6da679                 adc fa+1
+    71  774d 8da879                 sta f2+1
+    72                              
+    73  7750 a9ff                   lda #$ff
+    74  7752 a200                   ldx #0
+    75  7754 207c79                 jsr .fromReuF2ToMemloc
+    76                          
+    77                          ; get frame coordinates
+    78  7757 a000                   ldy #0
+    79  7759 8cae79                 sty baseY
+    80  775c 8caf79                 sty baseX
+    81  775f 206179                 jsr loadCoordinates ;increases y by 2
+    82  7762 adb079                 lda tempY
+    83  7765 8dae79                 sta baseY
+    84  7768 adb179                 lda tempX
+    85  776b 8daf79                 sta baseX
+    86                              
+    87  776e b1fb                   lda (memloc),y
+    88  7770 8de1c5                 sta spaltenanz
+    89  7773 8db279                 sta tempW
+    90  7776 c8                     iny
+    91  7777 b1fb                   lda (memloc),y
+    92  7779 8de2c5                 sta zeilenanz
+    93  777c 8db379                 sta tempH
+    94  777f 8ca979                 sty fy
+    95                          
+    96                              ; zeile mit rahmendaten vorbereiten
+    97                              ; $0137 für rahmenzeile (BD$). folgende Zeichen umgekehrt 111,183,112,180,32,170,108,187,188
+    98                              ; $0b für länge (8 zeichen)
+    99                              ; write color 6 ($a6 evtl nur positiv, wert für color-ram evtl in $20?)
+   100                          ;    ldx #fb
+   101                          ;    stx $a6
+   102                          
+   103  7782 a208                   ldx #8
+   104  7784 86b0                   stx helpvec
+   105                          
+   106  7786 bdbd79             -   lda border,x
+   107  7789 9d3701                 sta $0137,x
+   108  778c ca                     dex
+   109  778d 10f7                   bpl -
+   110                          
+   111  778f 205f8e                 jsr basromaus
+   112                              
+   113                              ; call INSERT BD$,BY,BX,BW,BH,#FB
+   114                              ; compute address (parameters are set)
+   115  7792 a900                   lda #0
+   116  7794 85a6                   sta $a6
+   117  7796 20b1a0                 jsr movez
+   118                              
+   119                              ; screen-ram work for box
+   120  7799 2058a1                 jsr mkbox
+   121                              
+   122                              ; color-ram work for box (replicates mve9 from TSB's INSERT routine)
+   123  779c e6a6                   inc $a6
+   124  779e 20b1a0                 jsr movez
+   125                              
+   126  77a1 a906                   lda #fb
+   127  77a3 20cb9e                 jsr mve9a
+   128                          
+   129                              ; call FILL BY+1,BX+1,BW-2,BH-2,32,1
+   130  77a6 eedfc5                 inc zeileanf
+   131  77a9 eee0c5                 inc spalteanf
+   132  77ac cee1c5                 dec spaltenanz
+   133  77af cee1c5                 dec spaltenanz
+   134  77b2 cee2c5                 dec zeilenanz
+   135  77b5 cee2c5                 dec zeilenanz
+   136                          
+   137                              ; calculate fill dimensions for screen-ram
+   138  77b8 a900                   lda #0
+   139  77ba 85a6                   sta $a6
+   140  77bc 20b1a0                 jsr movez
+   141                              
+   142                              ; set fill character (space)
+   143  77bf a920                   lda #32
+   144                              ; write to screen-ram
+   145  77c1 20cb9e                 jsr mve9a
+   146                              
+   147                              ; calculate fill dimensions for color-ram
+   148  77c4 e6a6                   inc $a6
+   149  77c6 20b1a0                 jsr movez
+   150                          
+   151                              ; set foreground-color to fill
+   152  77c9 a901                   lda #1
+   153                              ; write to color-ram
+   154  77cb 20cb9e                 jsr mve9a
+   155                              
+   156                              
+   157                              ; horizontal shadow below frame
+   158                              ; call FCOL BY+BH,BX+1,BW,1,#sb
+   159  77ce 18                     clc
+   160  77cf adb079                 lda tempY         ;load y
+   161  77d2 6db379                 adc tempH         ;add height
+   162  77d5 8ddfc5                 sta zeileanf      ;store y
+   163                              
+   164                          ;    clc
+   165  77d8 adb179                 lda tempX         ;load x
+   166  77db 6901                   adc #1            ;add 1
+   167  77dd 8de0c5                 sta spalteanf     ;store x
+   168                              
+   169                          ;    clc
+   170  77e0 adb279                 lda tempW         ;load width
+   171  77e3 8de1c5                 sta spaltenanz    ;store width
+   172                              
+   173                          ;    clc
+   174  77e6 a901                   lda #1            ;load height
+   175  77e8 8de2c5                 sta zeilenanz     ;store height
+   176                              
+   177                              ; calc addresses for color-ram
+   178  77eb e6a6                   inc $a6
+   179  77ed 20b1a0                 jsr movez
+   180                              
+   181                              ; write color value to calculated addresses
+   182  77f0 a90b                   lda #sb
+   183  77f2 20cb9e                 jsr mve9a
+   184                              
+   185                              ; vertical shadow right of frame
+   186                              ; call FCOL BY+1,BX+BW,1,BH,#sb
+   187  77f5 18                     clc
+   188  77f6 adb079                 lda tempY         ;load y
+   189  77f9 6901                   adc #1            ;add 1
+   190  77fb 8ddfc5                 sta zeileanf      ;store y
+   191                              
+   192                          ;    clc
+   193  77fe adb179                 lda tempX         ;load x
+   194  7801 6db279                 adc tempW         ;add width
+   195  7804 8de0c5                 sta spalteanf     ;store x
+   196                              
+   197                          ;    clc
+   198  7807 a901                   lda #1            ;load 1
+   199  7809 8de1c5                 sta spaltenanz    ;store width
+   200                              
+   201                          ;    clc
+   202  780c adb379                 lda tempH         ;load height
+   203  780f 8de2c5                 sta zeilenanz     ;store height
+   204                              
+   205                              ; calc addresses for color-ram
+   206  7812 e6a6                   inc $a6
+   207  7814 20b1a0                 jsr movez
+   208                              
+   209                              ; write color value to calculated addresses
+   210  7817 a90b                   lda #sb
+   211  7819 20cb9e                 jsr mve9a
+   212                              
+   213  781c 203a8e                 jsr basromein
+   214  781f 4c2578                 jmp +
+   215                              
+   216                              ; increase layout data offset by 4 (that's how long data for a frame is)
+   217                          incBy4
+   218  7822 207c79                 jsr .fromReuF2ToMemloc
+   219                              
+   220  7825 18                 +   clc
+   221  7826 ada979                 lda fy
+   222  7829 6904                   adc #4
+   223                          incByZ
+   224  782b 8da979                 sta fy
+   225                          
+   226                          ; check next type byte
+   227                          ; 0 = done
+   228                          ; 1 = cpr
+   229                          ; 2 = vpr
+   230                          ; 3 = vus
+   231                          ;checkNext
+   232  782e aca979                 ldy fy
+   233  7831 b1fb                   lda (memloc),y
+   234                          
+   235  7833 d001                   bne +
+   236  7835 60                     rts   ; zero means no more layout data for this frame
+   237  7836 c8                 +   iny
+   238                          
+   239  7837 c901                   cmp #1
+   240  7839 f009                   beq cpr
+   241                          
+   242  783b c902                   cmp #2
+   243  783d f010                   beq vpr
+   244                          
+   245  783f c903                   cmp #3
+   246  7841 f01f                   beq vus
+   247                          
+   248                              ; invalid value. leave. todo: throw syntax error or something like that
+   249  7843 60                     rts
+   250                          
+   251                          ; PRINT AT(). prints from the textconsts file with a constant index to constant coordinates
+   252                          cpr
+   253  7844 206179                 jsr loadCoordinates
+   254                              
+   255                              ;load index of text constant
+   256  7847 b1fb                   lda (memloc),y  
+   257                          
+   258  7849 20d278                 jsr printIndexAt
+   259                          
+   260  784c 4c2278                 jmp incBy4
+   261                              
+   262                          
+   263                          ; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
+   264                          vpr
+   265  784f 206179                 jsr loadCoordinates
+   266                          
+   267  7852 2000e2                 jsr chkcommaint
+   268  7855 8a                     txa
+   269                              
+   270  7856 20d278                 jsr printIndexAt
+   271                              
+   272                          ;incBy3
+   273  7859 18                     clc
+   274  785a ada979                 lda fy
+   275  785d 6903                   adc #3
+   276  785f 4c2b78                 jmp incByZ
+   277                              
+   278                          
+   279                          ; USE AT(). prints a numeric value from parameter with a given CF$ index
+   280                          vus
+   281  7862 206179                 jsr loadCoordinates
+   282                              
+   283  7865 b1fb                   lda (memloc),y
+   284  7867 aa                     tax
+   285  7868 bdb679                 lda cfIndex,x
+   286                          
+   287  786b 20e178                 jsr prepareForPrint
+   288                              
+   289  786e 8669                   stx $69 ;store length to x
+   290                              
+   291  7870 205f8e                 jsr basromaus
+   292  7873 aefd00                 ldx f4
+   293  7876 acfe00                 ldy f4+1
+   294                              ; call TSB's use3
+   295                              ; $69 contains length of ctrl string
+   296                              ; .X contains LB
+   297                              ; .Y contains HB
+   298                          
+   299  7879 20bda3                 jsr use3
+   300  787c 203a8e                 jsr basromein
+   301                          
+   302                              ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
+   303                              
+   304  787f 4c2278                 jmp incBy4
+   305                              
+   306                          ; this reads 3 addresses (tc,fa,memloc) from parameters and stores them here for future use
+   307                          setup
+   308                              ; read memory type
+   309  7882 2000e2                 jsr chkcommaint
+   310  7885 8eac79                 stx memtype
+   311                              
+   312                              ; read memloc. $c64d pretty much
+   313  7888 20fdae                 jsr chkcom
+   314  788b 208aad                 jsr frmnum
+   315  788e 20f7b7                 jsr getadr
+   316  7891 a514                   lda $14
+   317  7893 8dfb00                 sta memloc
+   318  7896 a515                   lda $15
+   319  7898 8dfc00                 sta memloc+1
+   320                              
+   321                              ; read text-constants offset. used to be $7a00 in main ram, but now needs to be REU/M65 bank offset
+   322  789b 20fdae                 jsr chkcom
+   323  789e 208aad                 jsr frmnum
+   324  78a1 20f7b7                 jsr getadr
+   325  78a4 a514                   lda $14
+   326  78a6 8daa79                 sta tc
+   327  78a9 a515                   lda $15
+   328  78ab 8dab79                 sta tc+1
+   329                              
+   330                              ; read frame-definitions offset. used to be $0400 in main ram, but now needs to be REU/M65 bank offset
+   331  78ae 20fdae                 jsr chkcom
+   332  78b1 208aad                 jsr frmnum
+   333  78b4 20f7b7                 jsr getadr
+   334  78b7 a514                   lda $14
+   335  78b9 8da579                 sta fa
+   336  78bc a515                   lda $15
+   337  78be 8da679                 sta fa+1
+   338                              
+   339  78c1 60                     rts
+   340                                  
+   341                          printConstant
+   342                              ;pt=tc+tx*3:tl=peek(pt):pokema,tl
+   343                              ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
+   344                              ; read constant index from parameter
+   345  78c2 2000e2                 jsr chkcommaint
+   346  78c5 8edfc5                 stx zeileanf
+   347  78c8 2000e2                 jsr chkcommaint
+   348  78cb 8ee0c5                 stx spalteanf
+   349  78ce 2000e2                 jsr chkcommaint
+   350  78d1 8a                     txa
+   351                          
+   352                          printIndexAt
+   353  78d2 20e178                 jsr prepareForPrint
+   354                          
+   355                              ; read char into A and call BSOUT
+   356                              ; for REU, f4 would be replaced with dedicated address $C64D, for example
+   357                              ; indexed reading by x instead of y
+   358  78d5 a000                   ldy #0
+   359  78d7 b1fb               -   lda (memloc),y
+   360  78d9 20d2ff                 jsr bsout
+   361  78dc c8                     iny
+   362  78dd ca                     dex
+   363  78de d0f7                   bne -
+   364                              
+   365  78e0 60                     rts
+   366                              
+   367                          prepareForPrint
+   368                          ; takes the value from .A (the text index) and multiplies by 3. store to f4
+   369                          ;  that's where length and string pointer are stored
+   370                          
+   371  78e1 a200                   ldx #0
+   372  78e3 8eb579                 stx tempIndex+1
+   373                              
+   374                              ;load pointer to text constant into f4
+   375                              ;pointer address = tempIndex*3
+   376  78e6 a202                   ldx #2
+   377  78e8 8db479                 sta tempIndex
+   378  78eb 18                 -   clc
+   379  78ec 6db479                 adc tempIndex
+   380  78ef 9003                   bcc +
+   381  78f1 eeb579                 inc tempIndex+1
+   382  78f4 ca                 +   dex
+   383  78f5 d0f4                   bne -
+   384  78f7 8db479                 sta tempIndex
+   385                              
+   386  78fa 18                     clc
+   387  78fb 6daa79                 adc tc        ; add offset to text-constants
+   388  78fe 8dfd00                 sta f4
+   389                              
+   390  7901 adab79                 lda tc+1
+   391  7904 6db579                 adc tempIndex+1
+   392  7907 8dfe00                 sta f4+1
+   393                              
+   394  790a a903                   lda #3
+   395  790c a200                   ldx #0
+   396  790e 203a79                 jsr .fromReuF4ToMemloc
+   397                              
+   398                              ; jump to constant print handling (same as for vpr)
+   399  7911 18                     clc         ;clear carry flag to indicate setting cursor position
+   400  7912 ace0c5                 ldy spalteanf   ;y-reg contains col
+   401  7915 aedfc5                 ldx zeileanf   ;x-reg contains row
+   402  7918 20f0ff                 jsr $fff0   ;set cursor position
+   403                              
+   404                              
+   405                          ; stores the pointer to the text constant into f4
+   406                          ;  length of the constant is stored to .X
+   407                              ; get text data from constants
+   408  791b a000                   ldy #0    
+   409  791d b1fb                   lda (memloc),y    ; load length of text
+   410  791f 48                     pha           ; store to stack
+   411                              
+   412  7920 c8                     iny
+   413  7921 b1fb                   lda (memloc),y    ; pointer low-byte offset
+   414  7923 aa                     tax           ; store to X temporary
+   415  7924 c8                     iny
+   416  7925 b1fb                   lda (memloc),y    ; pointer high-byte offset
+   417  7927 a8                     tay           ; store to y temporary
+   418                              
+   419  7928 18                     clc
+   420  7929 8a                     txa           ; get offset low-byte
+   421  792a 6daa79                 adc tc        ; add base-address low-byte
+   422  792d 8dfd00                 sta f4        ; store as new offset low-byte 
+   423                              
+   424  7930 98                     tya           ; get offset high-byte
+   425  7931 6dab79                 adc tc+1      ; add base-address high-byte
+   426  7934 8dfe00                 sta f4+1      ; store as new offset high-byte
+   427                          
+   428  7937 68                     pla           ; pull length from stack
+   429                              ;tax           ; write to X
+   430  7938 a200                   ldx #0        ; high-byte of length=0
+   431                              
+   432                          ; f4 could be a reference to REU memory.
+   433                          ; then we could copy the string to a dedicated RAM location at this point
+   434                          ; f4 would receive the dedicated RAM location afterwards
+   435                          ; the routine printIndexAt would then always just use a fixed read location
+   436                          ; $C64D is an area with 256 bytes available, that would be a good candidate for that
+   437                          ;    rts
+   438                          
+   439                          ; .A=LB, .X=HB for Length
+   440                          .fromReuF4ToMemloc
+   441  793a 8d07df                 sta REUBYTES
+   442  793d 8e08df                 stx REUBYTES+1
+   443                          
+   444                          ; set reu address
+   445  7940 adfd00                 lda f4
+   446  7943 8d04df                 sta REURAM
+   447  7946 adfe00                 lda f4+1
+   448  7949 8d05df                 sta REURAM+1
+   449  794c a900                   lda #0
+   450  794e 8d06df                 sta REUBANK ; bank
+   451                              
+   452                          ; set c64 address
+   453  7951 a9fb                   lda #<memloc
+   454  7953 8d02df                 sta REUC64RAM
+   455  7956 a900                   lda #>memloc+1
+   456  7958 8d03df                 sta REUC64RAM+1
+   457                              
+   458                          ;   xxxxxx00 = STASH
+   459                          ;   xxxxxx01 = FETCH
+   460                          ;   xxxxxx10 = SWAP
+   461                          ;   00000011 = VERIFY
+   462  795b a990                   lda #%10010000
+   463  795d 8d01df                 sta REUCOMMAND
+   464                              
+   465  7960 60                     rts
+   466                          
+   467                          
+   468                          loadCoordinates
+   469  7961 18                     clc
+   470  7962 b1fb                   lda (memloc),y
+   471  7964 6dae79                 adc baseY
+   472  7967 8ddfc5                 sta zeileanf
+   473  796a 8db079                 sta tempY
+   474  796d c8                     iny
+   475  796e 18                     clc
+   476  796f b1fb                   lda (memloc),y
+   477  7971 6daf79                 adc baseX
+   478  7974 8de0c5                 sta spalteanf
+   479  7977 8db179                 sta tempX
+   480  797a c8                     iny
+   481  797b 60                     rts
+   482                              
+   483                          ; .A=LB, .X=HB for Length
+   484                          .fromReuF2ToMemloc
+   485  797c 8d07df                 sta REUBYTES
+   486  797f 8e08df                 stx REUBYTES+1
+   487                          
+   488                          ; set reu address
+   489  7982 ada779                 lda f2
+   490  7985 8d04df                 sta REURAM
+   491  7988 ada879                 lda f2+1
+   492  798b 8d05df                 sta REURAM+1
+   493  798e a900                   lda #0
+   494  7990 8d06df                 sta REUBANK ; bank
+   495                              
+   496                          ; set c64 address
+   497  7993 adfb00                 lda memloc
+   498  7996 8d02df                 sta REUC64RAM
+   499  7999 adfc00                 lda memloc+1
+   500  799c 8d03df                 sta REUC64RAM+1
+   501                              
+   502                          ;   xxxxxx00 = STASH
+   503                          ;   xxxxxx01 = FETCH
+   504                          ;   xxxxxx10 = SWAP
+   505                          ;   00000011 = VERIFY
+   506  799f a990                   lda #%10010000
+   507  79a1 8d01df                 sta REUCOMMAND
+   508                          
+   509  79a4 60                     rts
+   510                          
+   511  79a5 0004               fa        !word $0400 ;address where the binary frame data is stored.
+   512  79a7 0000               f2        !word 0     ;current value of fa+offset
+   513  79a9 00                 fy        !byte 0     ;offset in frame-data (y offset in 256 byte window)
+   514                          
+   515  79aa 007a               tc        !word $7a00 ;address where the binary text constants are stored. todo: parse from SYS or POKE
+   516                          f4 = $fd
+   517                          
+   518                          memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+   519                          
+   520                          ; type of expanded memory
+   521                          ; 1=reu
+   522                          ; 2=mega65
+   523  79ac 00                 memtype   !byte 0
+   524                          
+   525                          
+   526                          
+   527                          fb = 6 ; foreground border
+   528                          sb = 11; shadow border
+   529                          
+   530  79ad 00                 fr        !byte 0
+   531                          ; stores x,y,w,h because we need them several times
+   532  79ae 00                 baseY     !byte 0
+   533  79af 00                 baseX     !byte 0
+   534                          
+   535  79b0 00                 tempY     !byte 0
+   536  79b1 00                 tempX     !byte 0
+   537                          
+   538                          ;used for frame fill and shadows to keep original values of frame's width and height
+   539  79b2 00                 tempW     !byte 0
+   540  79b3 00                 tempH     !byte 0
+   541                          
+   542  79b4 0000               tempIndex !word 0
+   543                          
+   544                          ; these are the indices in textconstants
+   545  79b6 58595a5b5c5d5e     cfIndex   !byte 88,89,90,91,92,93,94
+   546                          
+   547  79bd 7c7b6c6a20747077...border    !byte 124,123,108,106,32,116,112,119,111
+   548                          
+   549                          
+   550                          
+
+; ******** Source: src\auction.asm
+     1                          ;*=$c000
+     2                          
+     3                          !zone auction
+     4                          readkeys
+     5                            ; pfeil-links (pa7, pb1)
+     6                            ; pfeil-hoch (pa6, pb6)
+     7                            ; return (pa0, pb1)
+     8                            
+     9                            ; feuer 1 (pb4)
+    10                            ; feuer 2 (pa4)
+    11                          
+    12  79c6 78                   sei             ; Interrupts sperren (IRQ-Routine abschalten, um Überschneidungen mit alter Tastaturabfrage zu vermeiden)
+    13                            
+    14  79c7 a904                 lda #%00000100
+    15  79c9 85fc                 sta $fc
+    16                            
+    17  79cb a900                 lda #0
+    18  79cd 85fb                 sta $fb
+    19                            
+    20  79cf a202                 ldx #2
+    21                            
+    22                          selectColumn
+    23  79d1 bdfc79               lda cols,x      ; Spalte der Matrix testen (PA)
+    24  79d4 8d00dc               sta $dc00       ; Spaltenregister schreiben
+    25  79d7 2c00dc               bit $dc00       ; Dummy-Befehl: Warten, bis PA-Leitungen neuen Spannungspegel haben
+    26  79da 2c00dc               bit $dc00       ; Nochmal etwas warten
+    27                          
+    28                          .loop
+    29  79dd ad01dc               lda $dc01       ; Zeilenregister auslesen (PB)
+    30  79e0 cd01dc               cmp $dc01       ; Entprellen:
+    31  79e3 d0f8                 bne .loop       ; Warten bis PB stabil
+    32  79e5 3dff79               and rows,x      ; Zeile ausmaskieren
+    33                            
+    34  79e8 d006                 bne .checkNext   ; nicht gedrückt. nächstes zeichen prüfen
+    35                            
+    36  79ea a5fc                 lda $fc
+    37  79ec 05fb                 ora $fb
+    38  79ee 85fb                 sta $fb
+    39                          
+    40                          .checkNext
+    41  79f0 46fc                 lsr $fc  
+    42  79f2 ca                   dex
+    43  79f3 10dc                 bpl selectColumn
+    44                          
+    45  79f5 a9ff                 lda #%11111111
+    46  79f7 8d00dc               sta $dc00
+    47                          
+    48  79fa 58                   cli             ; Interrupts wieder zulassen
+    49  79fb 60                   rts             ; Rücksprung BASIC
+    50                          
+    51                          ;          return 01  pfhoch 66  pflinks71
+    52  79fc febf7f             cols !byte %11111110, %10111111, %01111111
+    53  79ff 024002             rows !byte %00000010, %01000000, %00000010
+
+; ******** Source: d:\c64\ver2\ver2\src\frame.asm
+   551                          
+   552                          
+   553                          ;!source "loadfromreu.asm"
+   554                          
+
+; ******** Source: src\megadma.asm
+     1                          
+     2                          
+     3                          !zone mega65dma
+     4                          dma_format= $d703
+     5                          dma_bank  = $d702 ;bank and flags
+     6                          dma_hb    = $d701 ;high byte of address
+     7                          dma_lbx   = $d700 ;low byte of address and execute
+     8                          
+     9                          chkcom      = $aefd
+    10                          chkcommaint = $e200
+    11                          frmnum      = $ad8a
+    12                          getadr      = $b7f7
+    13                          
+    14                          knockVic4
+    15  7a02 a947                 lda #$47      ;(dec 71) "G"
+    16  7a04 8d2fd0               sta $d02f  
+    17  7a07 a953                 lda #$53      ;(dec 83) "S"
+    18  7a09 8d2fd0               sta $d02f
+    19  7a0c 60                   rts
+    20                            
+    21                          dmaCopy
+    22  7a0d 20027a               jsr knockVic4
+    23                          
+    24                            ; parse parameters (count, source, dest)
+    25  7a10 20fdae               jsr chkcom
+    26  7a13 208aad               jsr frmnum
+    27  7a16 20f7b7               jsr getadr
+    28  7a19 a514                 lda $14
+    29  7a1b 8d707a               sta .dmalistCount
+    30  7a1e a515                 lda $15
+    31  7a20 8d717a               sta .dmalistCount+1
+    32                            
+    33  7a23 20fdae               jsr chkcom
+    34  7a26 208aad               jsr frmnum
+    35  7a29 20f7b7               jsr getadr
+    36  7a2c a514                 lda $14
+    37  7a2e 8d727a               sta .dmalistSourceAddr
+    38  7a31 a515                 lda $15
+    39  7a33 8d737a               sta .dmalistSourceAddr+1
+    40                            
+    41  7a36 2000e2               jsr chkcommaint
+    42  7a39 8e747a               stx .dmalistSourceBank
+    43                            
+    44  7a3c 20fdae               jsr chkcom
+    45  7a3f 208aad               jsr frmnum
+    46  7a42 20f7b7               jsr getadr
+    47  7a45 a514                 lda $14
+    48  7a47 8d757a               sta .dmalistDestAddr
+    49  7a4a a515                 lda $15
+    50  7a4c 8d767a               sta .dmalistDestAddr+1
+    51                            
+    52  7a4f 2000e2               jsr chkcommaint
+    53  7a52 8e777a               stx .dmalistDestBank
+    54                            
+    55  7a55 a901                 lda #1
+    56  7a57 8d03d7               sta dma_format
+    57                            
+    58  7a5a a900                 lda #0
+    59  7a5c 8d02d7               sta dma_bank
+    60                            
+    61  7a5f a97a                 lda #>.dmalist
+    62  7a61 8d01d7               sta dma_hb
+    63                            
+    64  7a64 a96f                 lda #<.dmalist
+    65  7a66 8d00d7               sta dma_lbx
+    66                          
+    67                          knockVic2  
+    68  7a69 a900                 lda #0
+    69  7a6b 8d2fd0               sta $d02f
+    70                          
+    71  7a6e 60                   rts
+    72                            
+    73                            
+    74                          .dmalist
+    75  7a6f 00                   !byte 0     ; command lsb (0=copy, 3=fill)
+    76                          .dmalistCount
+    77  7a70 0000                 !word 0     ; count
+    78                          .dmalistSourceAddr
+    79  7a72 0000                 !word 0     ; source address
+    80                          .dmalistSourceBank
+    81  7a74 00                   !byte 0     ; source bank and flags
+    82                          .dmalistDestAddr
+    83  7a75 0000                 !word 0     ; dest address
+    84                          .dmalistDestBank
+    85  7a77 00                   !byte 0     ; dest bank and flags
+    86                            
+    87  7a78 00                   !byte 0     ; command msb (always zero)
+    88  7a79 0000                 !word 0     ; modulo. unused. always zero
+    89                            
+
+; ******** Source: d:\c64\ver2\ver2\src\frame.asm
+   555                          
+   556                          
+   557                          ; source: https://www.retro-programming.de/programming/nachschlagewerk/nice-to-know/reu-programmierung/
+   558                          ;*******************************************************************************
+   559                          ;*** REU-Register
+   560                          ;*******************************************************************************
+   561                          REUSTATUS           = $df00         ;Statusregister (nur lesen, wird dann gelöscht!)
+   562                          REUCOMMAND          = $df01         ;Befehlsregister
+   563                          REUC64RAM           = $df02         ;RAM-Adresse im C64 (LSB/MSB)
+   564                          REURAM              = $df04         ;Speicher Adresse in der REU (LSB/MSB)
+   565                          REUBANK             = $df06         ;Bank in der REU
+   566                          REUBYTES            = $df07         ;Anzahl der betroffenen BYTES (LSB/MSB)
+   567                          REUIRQMASK          = $df09         ;Interruptmaske
+   568                          REUADRCONTROL       = $df0a         ;Adress-Kontroll-Register
+   569                          
+   570                          ;*******************************************************************************
+   571                          ;*** REU-Befehle
+   572                          ;*******************************************************************************
+   573                           
+   574                          ;*** Standardbefehle mit AUTOLOAD, ohne $ff00
+   575                          REU_STASH_A__       = $fc           ;kopiere C64 -> REU
+   576                          REU_FETCH_A__       = $fd           ;kopiere REU -> C64
+   577                          REU_SWAP_A__        = $fe           ;Speicherbereich tauschen
+   578                          REU_VERIFY_A__      = $ff           ;Speicherbereich vergleichen
+   579                           
+   580                          ;*** mit AUTOLOAD und mit $ff00
+   581                          REU_STASH_A_F       = $ec           ;kopiere C64 -> REU
+   582                          REU_FETCH_A_F       = $ed           ;kopiere REU -> C64
+   583                          REU_SWAP_A_F        = $ee           ;Speicherbereich tauschen
+   584                          REU_VERIFY_A_F      = $ef           ;Speicherbereich vergleichen
+   585                           
+   586                          ;*** ohne AUTOLOAD, ohne $ff00
+   587                          REU_STASH____       = $dc           ;kopiere C64 -> REU
+   588                          REU_FETCH____       = $dd           ;kopiere REU -> C64
+   589                          REU_SWAP____        = $de           ;Speicherbereich tauschen
+   590                          REU_VERIFY____      = $df           ;Speicherbereich vergleichen
+   591                           
+   592                          ;*** ohne AUTOLOAD, mit $ff00
+   593                          REU_STASH___F       = $cc           ;kopiere C64 -> REU
+   594                          REU_FETCH___F       = $cd           ;kopiere REU -> C64
+   595                          REU_SWAP___F        = $ce           ;Speicherbereich tauschen
+   596                          REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen

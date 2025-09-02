@@ -1,0 +1,15 @@
+{
+    "name": "tsb-vermeer (Workspace)",
+    "description": "Project tsb-vermeer (Workspace)",
+    "toolkit": "acme",
+    "sources": [
+        "src/frame.asm"
+    ],
+    "build": "debug",
+    "definitions": [],
+    "includes": [
+        "."
+    ],
+    "args": [],
+    "compiler": ""
+}

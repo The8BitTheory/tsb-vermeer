@@ -48,13 +48,18 @@ frame
     lda fa+1
     adc #0
     sta f2+1
+    
+    ; copy index data (2 bytes) from reu to ram
+    lda #2
+    ldx #0
+    jsr .fromReuF2ToMemloc
 
 ; calculate layout data address by reading the offset and then adding it to fa
     ldy #0
-    lda (f2),y
+    lda (memloc),y
     tax
     iny
-    lda (f2),y
+    lda (memloc),y
     pha
     iny
     clc
@@ -64,6 +69,10 @@ frame
     pla
     adc fa+1
     sta f2+1
+    
+    lda #$ff
+    ldx #0
+    jsr .fromReuF2ToMemloc
 
 ; get frame coordinates
     ldy #0
@@ -75,13 +84,14 @@ frame
     lda tempX
     sta baseX
     
-    lda (f2),y
+    lda (memloc),y
     sta spaltenanz
     sta tempW
     iny
-    lda (f2),y
+    lda (memloc),y
     sta zeilenanz
     sta tempH
+    sty fy
 
     ; zeile mit rahmendaten vorbereiten
     ; $0137 für rahmenzeile (BD$). folgende Zeichen umgekehrt 111,183,112,180,32,170,108,187,188
@@ -201,25 +211,26 @@ frame
     jsr mve9a
     
     jsr basromein
+    jmp +
     
     ; increase layout data offset by 4 (that's how long data for a frame is)
 incBy4
-    clc
-    lda f2
+    jsr .fromReuF2ToMemloc
+    
++   clc
+    lda fy
     adc #4
 incByZ
-    sta f2
-    bcc checkNext
-    inc f2+1
+    sta fy
 
 ; check next type byte
 ; 0 = done
 ; 1 = cpr
 ; 2 = vpr
 ; 3 = vus
-checkNext
-    ldy #0
-    lda (f2),y
+;checkNext
+    ldy fy
+    lda (memloc),y
 
     bne +
     rts   ; zero means no more layout data for this frame
@@ -242,7 +253,7 @@ cpr
     jsr loadCoordinates
     
     ;load index of text constant
-    lda (f2),y  
+    lda (memloc),y  
 
     jsr printIndexAt
 
@@ -260,7 +271,7 @@ vpr
     
 ;incBy3
     clc
-    lda f2
+    lda fy
     adc #3
     jmp incByZ
     
@@ -269,7 +280,7 @@ vpr
 vus
     jsr loadCoordinates
     
-    lda (f2),y
+    lda (memloc),y
     tax
     lda cfIndex,x
 
@@ -292,9 +303,41 @@ vus
     
     jmp incBy4
     
+; this reads 3 addresses (tc,fa,memloc) from parameters and stores them here for future use
 setup
-    rts
+    ; read memory type
+    jsr chkcommaint
+    stx memtype
     
+    ; read memloc. $c64d pretty much
+    jsr chkcom
+    jsr frmnum
+    jsr getadr
+    lda $14
+    sta memloc
+    lda $15
+    sta memloc+1
+    
+    ; read text-constants offset. used to be $7a00 in main ram, but now needs to be REU/M65 bank offset
+    jsr chkcom
+    jsr frmnum
+    jsr getadr
+    lda $14
+    sta tc
+    lda $15
+    sta tc+1
+    
+    ; read frame-definitions offset. used to be $0400 in main ram, but now needs to be REU/M65 bank offset
+    jsr chkcom
+    jsr frmnum
+    jsr getadr
+    lda $14
+    sta fa
+    lda $15
+    sta fa+1
+    
+    rts
+        
 printConstant
     ;pt=tc+tx*3:tl=peek(pt):pokema,tl
     ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
@@ -313,7 +356,7 @@ printIndexAt
     ; for REU, f4 would be replaced with dedicated address $C64D, for example
     ; indexed reading by x instead of y
     ldy #0
--   lda (f4),y
+-   lda (memloc),y
     jsr bsout
     iny
     dex
@@ -348,24 +391,29 @@ prepareForPrint
     adc tempIndex+1
     sta f4+1
     
+    lda #3
+    ldx #0
+    jsr .fromReuF4ToMemloc
+    
     ; jump to constant print handling (same as for vpr)
     clc         ;clear carry flag to indicate setting cursor position
     ldy spalteanf   ;y-reg contains col
     ldx zeileanf   ;x-reg contains row
     jsr $fff0   ;set cursor position
     
+    
 ; stores the pointer to the text constant into f4
 ;  length of the constant is stored to .X
     ; get text data from constants
     ldy #0    
-    lda (f4),y    ; load length of text
+    lda (memloc),y    ; load length of text
     pha           ; store to stack
     
     iny
-    lda (f4),y    ; pointer low-byte offset
+    lda (memloc),y    ; pointer low-byte offset
     tax           ; store to X temporary
     iny
-    lda (f4),y    ; pointer high-byte offset
+    lda (memloc),y    ; pointer high-byte offset
     tay           ; store to y temporary
     
     clc
@@ -378,36 +426,104 @@ prepareForPrint
     sta f4+1      ; store as new offset high-byte
 
     pla           ; pull length from stack
-    tax           ; write to X
+    ;tax           ; write to X
+    ldx #0        ; high-byte of length=0
     
 ; f4 could be a reference to REU memory.
 ; then we could copy the string to a dedicated RAM location at this point
 ; f4 would receive the dedicated RAM location afterwards
 ; the routine printIndexAt would then always just use a fixed read location
 ; $C64D is an area with 256 bytes available, that would be a good candidate for that
+;    rts
+
+; .A=LB, .X=HB for Length
+.fromReuF4ToMemloc
+    sta REUBYTES
+    stx REUBYTES+1
+
+; set reu address
+    lda f4
+    sta REURAM
+    lda f4+1
+    sta REURAM+1
+    lda #0
+    sta REUBANK ; bank
+    
+; set c64 address
+    lda #<memloc
+    sta REUC64RAM
+    lda #>memloc+1
+    sta REUC64RAM+1
+    
+;   xxxxxx00 = STASH
+;   xxxxxx01 = FETCH
+;   xxxxxx10 = SWAP
+;   00000011 = VERIFY
+    lda #%10010000
+    sta REUCOMMAND
+    
     rts
+
 
 loadCoordinates
     clc
-    lda (f2),y
+    lda (memloc),y
     adc baseY
     sta zeileanf
     sta tempY
     iny
     clc
-    lda (f2),y
+    lda (memloc),y
     adc baseX
     sta spalteanf
     sta tempX
     iny
     rts
+    
+; .A=LB, .X=HB for Length
+.fromReuF2ToMemloc
+    sta REUBYTES
+    stx REUBYTES+1
 
-fa        !word $0400 ;address where the binary frame data is stored. todo: parse from SYS or POKE
+; set reu address
+    lda f2
+    sta REURAM
+    lda f2+1
+    sta REURAM+1
+    lda #0
+    sta REUBANK ; bank
+    
+; set c64 address
+    lda memloc
+    sta REUC64RAM
+    lda memloc+1
+    sta REUC64RAM+1
+    
+;   xxxxxx00 = STASH
+;   xxxxxx01 = FETCH
+;   xxxxxx10 = SWAP
+;   00000011 = VERIFY
+    lda #%10010000
+    sta REUCOMMAND
+
+    rts
+
+fa        !word $0400 ;address where the binary frame data is stored.
+f2        !word 0     ;current value of fa+offset
+fy        !byte 0     ;offset in frame-data (y offset in 256 byte window)
+
 tc        !word $7a00 ;address where the binary text constants are stored. todo: parse from SYS or POKE
-memloc    !word $c64d ;temporary 256 byte working area for dma.
-
-f2 = $fb
 f4 = $fd
+
+memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+
+; type of expanded memory
+; 1=reu
+; 2=mega65
+memtype   !byte 0
+
+
+
 fb = 6 ; foreground border
 sb = 11; shadow border
 
@@ -432,8 +548,49 @@ border    !byte 124,123,108,106,32,116,112,119,111
 
 
 
-!source "auction.asm"
+!source "src/auction.asm"
 
 ;!source "loadfromreu.asm"
 
-!source "megadma.asm"
+!source "src/megadma.asm"
+
+; source: https://www.retro-programming.de/programming/nachschlagewerk/nice-to-know/reu-programmierung/
+;*******************************************************************************
+;*** REU-Register
+;*******************************************************************************
+REUSTATUS           = $df00         ;Statusregister (nur lesen, wird dann gelöscht!)
+REUCOMMAND          = $df01         ;Befehlsregister
+REUC64RAM           = $df02         ;RAM-Adresse im C64 (LSB/MSB)
+REURAM              = $df04         ;Speicher Adresse in der REU (LSB/MSB)
+REUBANK             = $df06         ;Bank in der REU
+REUBYTES            = $df07         ;Anzahl der betroffenen BYTES (LSB/MSB)
+REUIRQMASK          = $df09         ;Interruptmaske
+REUADRCONTROL       = $df0a         ;Adress-Kontroll-Register
+
+;*******************************************************************************
+;*** REU-Befehle
+;*******************************************************************************
+ 
+;*** Standardbefehle mit AUTOLOAD, ohne $ff00
+REU_STASH_A__       = $fc           ;kopiere C64 -> REU
+REU_FETCH_A__       = $fd           ;kopiere REU -> C64
+REU_SWAP_A__        = $fe           ;Speicherbereich tauschen
+REU_VERIFY_A__      = $ff           ;Speicherbereich vergleichen
+ 
+;*** mit AUTOLOAD und mit $ff00
+REU_STASH_A_F       = $ec           ;kopiere C64 -> REU
+REU_FETCH_A_F       = $ed           ;kopiere REU -> C64
+REU_SWAP_A_F        = $ee           ;Speicherbereich tauschen
+REU_VERIFY_A_F      = $ef           ;Speicherbereich vergleichen
+ 
+;*** ohne AUTOLOAD, ohne $ff00
+REU_STASH____       = $dc           ;kopiere C64 -> REU
+REU_FETCH____       = $dd           ;kopiere REU -> C64
+REU_SWAP____        = $de           ;Speicherbereich tauschen
+REU_VERIFY____      = $df           ;Speicherbereich vergleichen
+ 
+;*** ohne AUTOLOAD, mit $ff00
+REU_STASH___F       = $cc           ;kopiere C64 -> REU
+REU_FETCH___F       = $cd           ;kopiere REU -> C64
+REU_SWAP___F        = $ce           ;Speicherbereich tauschen
+REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
