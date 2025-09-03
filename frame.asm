@@ -1,6 +1,6 @@
 ;6502 assembly
 
-*= $7700
+*= $7c00
 
 !to "frame.bin.prg",cbm
 
@@ -548,11 +548,11 @@ border    !byte 124,123,108,106,32,116,112,119,111
 
 
 
-!source "src/auction.asm"
+!source "auction.asm"
 
 ;!source "loadfromreu.asm"
 
-!source "src/megadma.asm"
+!source "megadma.asm"
 
 ; source: https://www.retro-programming.de/programming/nachschlagewerk/nice-to-know/reu-programmierung/
 ;*******************************************************************************

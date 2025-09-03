@@ -32,7 +32,7 @@ rule asm
     deps = gcc
     command = $asm_exe $flags $includes -r "$dbg_out" -o $out $in
 
-build $target | $dbg_out : asm d$:\c64\ver2\ver2\src\frame.asm
+build $target | $dbg_out : asm d$:\c64\ver2\ver2\frame.asm
 
 build all: phony $target
 default all

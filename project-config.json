@@ -3,7 +3,7 @@
     "description": "Project tsb-vermeer (Workspace)",
     "toolkit": "acme",
     "sources": [
-        "src/frame.asm"
+        "frame.asm"
     ],
     "build": "debug",
     "definitions": [],
