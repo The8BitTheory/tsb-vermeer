@@ -34,6 +34,13 @@ bsout       =   $ffd2
     jmp knockVic4           ;mega65
     jmp knockVic2
 
+
+baseY     !byte 0
+baseX     !byte 0
+baseW     !byte 0
+baseH     !byte 0
+
+
 frame
 ; calculate absolute address of frame index offsets
 
@@ -87,10 +94,12 @@ frame
     lda (memloc),y
     sta spaltenanz
     sta tempW
+    sta baseW
     iny
     lda (memloc),y
     sta zeilenanz
     sta tempH
+    sta baseH
     iny
     sty fy
 
@@ -276,6 +285,7 @@ vus
     jsr loadCoordinates
     
     lda (memloc),y
+    iny
     sty fy    ;store y-offset of framedata
     tax
     lda cfIndex,x
@@ -285,12 +295,19 @@ vus
     stx $69 ;store length to x
     
     jsr basromaus
-    ldx f4
-    ldy f4+1
+
+    lda $69
+    ldx #0
+    jsr .fromReuF4ToMemloc
+
+;    ldx f4
+;    ldy f4+1
     ; call TSB's use3
     ; $69 contains length of ctrl string
     ; .X contains LB
     ; .Y contains HB
+    ldx memloc
+    ldy memloc+1
 
     jsr use3
     jsr basromein
@@ -526,8 +543,6 @@ sb = 11; shadow border
 
 fr        !byte 0
 ; stores x,y,w,h because we need them several times
-baseY     !byte 0
-baseX     !byte 0
 
 tempY     !byte 0
 tempX     !byte 0
