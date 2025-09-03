@@ -91,6 +91,7 @@ frame
     lda (memloc),y
     sta zeilenanz
     sta tempH
+    iny
     sty fy
 
     ; zeile mit rahmendaten vorbereiten
@@ -219,14 +220,12 @@ checkNext
     ldx #0
     jsr .fromReuF2ToMemloc
 
-+   inc fy
-
 ; check next type byte
 ; 0 = done
 ; 1 = cpr
 ; 2 = vpr
 ; 3 = vus
-    ldy fy
++   ldy fy
     lda (memloc),y
 
     bne +
@@ -250,9 +249,10 @@ cpr
     jsr loadCoordinates
     
     ;load index of text constant
-    lda (memloc),y  
+    lda (memloc),y
+    iny
     sty fy    ;store y-offset of framedata
-    
+
     jsr printIndexAt
 
     jmp checkNext
@@ -261,7 +261,7 @@ cpr
 ; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
 vpr
     jsr loadCoordinates
-
+    sty fy
     jsr chkcommaint
     txa
     
