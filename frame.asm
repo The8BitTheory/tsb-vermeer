@@ -214,21 +214,18 @@ frame
     jmp +
     
     ; increase layout data offset by 4 (that's how long data for a frame is)
-incBy4
+checkNext
+    lda #$ff
+    ldx #0
     jsr .fromReuF2ToMemloc
-    
-+   clc
-    lda fy
-    adc #4
-incByZ
-    sta fy
+
++   inc fy
 
 ; check next type byte
 ; 0 = done
 ; 1 = cpr
 ; 2 = vpr
 ; 3 = vus
-;checkNext
     ldy fy
     lda (memloc),y
 
@@ -254,10 +251,11 @@ cpr
     
     ;load index of text constant
     lda (memloc),y  
-
+    sty fy    ;store y-offset of framedata
+    
     jsr printIndexAt
 
-    jmp incBy4
+    jmp checkNext
     
 
 ; PRINT AT().  prints from the textconsts file with a variable index (via param) to constant coordinates
@@ -270,10 +268,7 @@ vpr
     jsr printIndexAt
     
 ;incBy3
-    clc
-    lda fy
-    adc #3
-    jmp incByZ
+    jmp checkNext
     
 
 ; USE AT(). prints a numeric value from parameter with a given CF$ index
@@ -281,6 +276,7 @@ vus
     jsr loadCoordinates
     
     lda (memloc),y
+    sty fy    ;store y-offset of framedata
     tax
     lda cfIndex,x
 
@@ -301,7 +297,7 @@ vus
 
     ;USE AT(BY+CY,BX+CX) CF$(CF),VX(VX)
     
-    jmp incBy4
+    jmp checkNext
     
 ; this reads 3 addresses (tc,fa,memloc) from parameters and stores them here for future use
 setup
@@ -440,6 +436,7 @@ prepareForPrint
 .fromReuF4ToMemloc
     sta REUBYTES
     stx REUBYTES+1
+    tax ;write length to x (for printIndexAt decrementing)
 
 ; set reu address
     lda f4
@@ -450,16 +447,16 @@ prepareForPrint
     sta REUBANK ; bank
     
 ; set c64 address
-    lda #<memloc
+    lda memloc
     sta REUC64RAM
-    lda #>memloc+1
+    lda memloc+1
     sta REUC64RAM+1
     
 ;   xxxxxx00 = STASH
 ;   xxxxxx01 = FETCH
 ;   xxxxxx10 = SWAP
 ;   00000011 = VERIFY
-    lda #%10010000
+    lda #REU_FETCH____
     sta REUCOMMAND
     
     rts
@@ -503,7 +500,7 @@ loadCoordinates
 ;   xxxxxx01 = FETCH
 ;   xxxxxx10 = SWAP
 ;   00000011 = VERIFY
-    lda #%10010000
+    lda #REU_FETCH____
     sta REUCOMMAND
 
     rts
