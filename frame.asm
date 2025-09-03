@@ -527,7 +527,8 @@ f2        !word 0     ;current value of fa+offset
 fy        !byte 0     ;offset in frame-data (y offset in 256 byte window)
 
 tc        !word $7a00 ;address where the binary text constants are stored. todo: parse from SYS or POKE
-f4 = $fd
+f4        !word 0     ;
+;f4 = $fd
 
 memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 
