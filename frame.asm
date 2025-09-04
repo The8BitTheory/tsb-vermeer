@@ -43,6 +43,7 @@ baseH     !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
+    jsr .reuPreWarm
 
     jsr chkcommaint
     stx fr
@@ -57,8 +58,7 @@ frame
     sta f2+1
     
     ; copy index data (2 bytes) from reu to ram
-    lda #2
-    ldx #0
+    ldx #2
     jsr .fromReuF2ToMemloc
 
 ; calculate layout data address by reading the offset and then adding it to fa
@@ -77,8 +77,7 @@ frame
     adc fa+1
     sta f2+1
     
-    lda #$ff
-    ldx #0
+    ldx #$ff
     jsr .fromReuF2ToMemloc
 
 ; get frame coordinates
@@ -225,8 +224,7 @@ frame
     
     ; increase layout data offset by 4 (that's how long data for a frame is)
 checkNext
-    lda #$ff
-    ldx #0
+    ldx #$ff
     jsr .fromReuF2ToMemloc
 
 ; check next type byte
@@ -296,8 +294,7 @@ vus
     
     jsr basromaus
 
-    lda $69
-    ldx #0
+    ldx $69
     jsr .fromReuF4ToMemloc
 
 ;    ldx f4
@@ -355,6 +352,8 @@ printConstant
     ;pt=tc+tx*3:tl=peek(pt):pokema,tl
     ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
     ; read constant index from parameter
+    jsr .reuPreWarm
+    
     jsr chkcommaint
     stx zeileanf
     jsr chkcommaint
@@ -404,8 +403,7 @@ prepareForPrint
     adc tempIndex+1
     sta f4+1
     
-    lda #3
-    ldx #0
+    ldx #3
     jsr .fromReuF4ToMemloc
     
     ; jump to constant print handling (same as for vpr)
@@ -439,45 +437,9 @@ prepareForPrint
     sta f4+1      ; store as new offset high-byte
 
     pla           ; pull length from stack
-    ;tax           ; write to X
-    ldx #0        ; high-byte of length=0
+    tax           ; write to X
     
-; f4 could be a reference to REU memory.
-; then we could copy the string to a dedicated RAM location at this point
-; f4 would receive the dedicated RAM location afterwards
-; the routine printIndexAt would then always just use a fixed read location
-; $C64D is an area with 256 bytes available, that would be a good candidate for that
-;    rts
-
-; .A=LB, .X=HB for Length
-.fromReuF4ToMemloc
-    sta REUBYTES
-    stx REUBYTES+1
-    tax ;write length to x (for printIndexAt decrementing)
-
-; set reu address
-    lda f4
-    sta REURAM
-    lda f4+1
-    sta REURAM+1
-    lda #0
-    sta REUBANK ; bank
-    
-; set c64 address
-    lda memloc
-    sta REUC64RAM
-    lda memloc+1
-    sta REUC64RAM+1
-    
-;   xxxxxx00 = STASH
-;   xxxxxx01 = FETCH
-;   xxxxxx10 = SWAP
-;   00000011 = VERIFY
-    lda #REU_FETCH____
-    sta REUCOMMAND
-    
-    rts
-
+    jmp .fromReuF4ToMemloc
 
 loadCoordinates
     clc
@@ -494,41 +456,55 @@ loadCoordinates
     iny
     rts
     
-; .A=LB, .X=HB for Length
+; .A=c64 address LB, .Y=c64 address HB, .X=length LB
+.fromReuF4ToMemloc
+    lda f4
+    ldy f4+1
+    jmp .fromReuToMemloc
+
+; .A=c64 address LB, .Y=c64 address HB, .X=length LB
 .fromReuF2ToMemloc
-    sta REUBYTES
-    stx REUBYTES+1
+    lda f2
+    ldy f2+1
+    
+; .A=LB, .X=HB for Length
+.fromReuToMemloc
+    stx REUBYTES
 
 ; set reu address
-    lda f2
     sta REURAM
-    lda f2+1
-    sta REURAM+1
-    lda #0
-    sta REUBANK ; bank
+    sty REURAM+1
     
 ; set c64 address
-    lda memloc
-    sta REUC64RAM
-    lda memloc+1
-    sta REUC64RAM+1
+    ;done in preWarm
     
 ;   xxxxxx00 = STASH
 ;   xxxxxx01 = FETCH
 ;   xxxxxx10 = SWAP
 ;   00000011 = VERIFY
-    lda #REU_FETCH____
+    lda #REU_FETCH_A__
     sta REUCOMMAND
 
     rts
+    
+.reuPreWarm
+    lda #0
+    sta REUBYTES+1
+    sta REUBANK
+    
+    lda memloc
+    sta REUC64RAM
+    lda memloc+1
+    sta REUC64RAM+1
+    
+    rts
 
-fa        !word $0400 ;address where the binary frame data is stored.
-f2        !word 0     ;current value of fa+offset
-fy        !byte 0     ;offset in frame-data (y offset in 256 byte window)
+fa        !word $0400 ; address where the binary frame data is stored.
+f2        !word 0     ; current value of fa+offset
+fy        !byte 0     ; offset in frame-data (y offset in 256 byte window)
 
-tc        !word $7a00 ;address where the binary text constants are stored. todo: parse from SYS or POKE
-f4        !word 0     ;
-;f4 = $fd
+tc        !word $7a00 ; address where the binary text constants are stored. todo: parse from SYS or POKE
+f4        !word 0     ; 
 
 memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 
