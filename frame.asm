@@ -43,7 +43,7 @@ baseH     !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
-    jsr .reuPreWarm
+    jsr .memExpPreWarm
 
     jsr chkcommaint
     stx fr
@@ -59,7 +59,7 @@ frame
     
     ; copy index data (2 bytes) from reu to ram
     ldx #2
-    jsr .fromReuF2ToMemloc
+    jsr .memExpFromF2
 
 ; calculate layout data address by reading the offset and then adding it to fa
     ldy #0
@@ -78,7 +78,7 @@ frame
     sta f2+1
     
     ldx #$ff
-    jsr .fromReuF2ToMemloc
+    jsr .memExpFromF2
 
 ; get frame coordinates
     ldy #0
@@ -225,7 +225,7 @@ frame
     ; increase layout data offset by 4 (that's how long data for a frame is)
 checkNext
     ldx #$ff
-    jsr .fromReuF2ToMemloc
+    jsr .memExpFromF2
 
 ; check next type byte
 ; 0 = done
@@ -295,8 +295,8 @@ vus
     jsr basromaus
 
     ldx $69
-    jsr .fromReuF4ToMemloc
-
+    jsr .memExpFromF4
+    
 ;    ldx f4
 ;    ldy f4+1
     ; call TSB's use3
@@ -346,13 +346,48 @@ setup
     lda $15
     sta fa+1
     
-    rts
+    lda memtype
+    cmp #1
+    bne +
+    lda #<.reuPreWarm
+    sta memexp_prewarm
+    lda #>.reuPreWarm
+    sta memexp_prewarm+1
+    
+    lda #<.fromReuF2ToMemloc
+    sta memexp_f2
+    lda #>.fromReuF2ToMemloc
+    sta memexp_f2+1
+    
+    lda #<.fromReuF4ToMemloc
+    sta memexp_f4
+    lda #>.fromReuF4ToMemloc
+    sta memexp_f4+1
+    
++   cmp #2
+    bne +
+    lda #<mega65DmaFetchPreWarm
+    sta memexp_prewarm
+    lda #>mega65DmaFetchPreWarm
+    sta memexp_prewarm+1
+    
+    lda #<fromMega65F2ToMemloc
+    sta memexp_f2
+    lda #>fromMega65F2ToMemloc
+    sta memexp_f2+1
+    
+    lda #<fromMega65F4ToMemloc
+    sta memexp_f4
+    lda #>fromMega65F4ToMemloc
+    sta memexp_f4+1
+    
++   rts
         
 printConstant
     ;pt=tc+tx*3:tl=peek(pt):pokema,tl
     ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
     ; read constant index from parameter
-    jsr .reuPreWarm
+    jsr .memExpPreWarm
     
     jsr chkcommaint
     stx zeileanf
@@ -404,7 +439,7 @@ prepareForPrint
     sta f4+1
     
     ldx #3
-    jsr .fromReuF4ToMemloc
+    jsr .memExpFromF4
     
     ; jump to constant print handling (same as for vpr)
     clc         ;clear carry flag to indicate setting cursor position
@@ -439,7 +474,7 @@ prepareForPrint
     pla           ; pull length from stack
     tax           ; write to X
     
-    jmp .fromReuF4ToMemloc
+    jmp .memExpFromF4
 
 loadCoordinates
     clc
@@ -487,6 +522,15 @@ loadCoordinates
 
     rts
     
+.memExpPreWarm
+    jmp (memexp_prewarm)
+    
+.memExpFromF2
+    jmp (memexp_f2)
+    
+.memExpFromF4
+    jmp (memexp_f4)
+    
 .reuPreWarm
     lda #0
     sta REUBYTES+1
@@ -498,6 +542,8 @@ loadCoordinates
     sta REUC64RAM+1
     
     rts
+    
+    
 
 fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
@@ -512,6 +558,11 @@ memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 ; 1=reu
 ; 2=mega65
 memtype   !byte 0
+
+; the address
+memexp_prewarm  !word 0
+memexp_f2       !word 0
+memexp_f4       !word 0
 
 
 
@@ -535,13 +586,11 @@ cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
 
-
-
-!source "auction.asm"
-
 ;!source "loadfromreu.asm"
 
 !source "megadma.asm"
+
+!source "auction.asm"
 
 ; source: https://www.retro-programming.de/programming/nachschlagewerk/nice-to-know/reu-programmierung/
 ;*******************************************************************************

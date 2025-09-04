@@ -52,8 +52,8 @@ dmaCopy
   jsr chkcommaint
   stx .dmalistDestBank
   
-  lda #1
-  sta dma_format
+;  lda #1
+;  sta dma_format
   
   lda #0
   sta dma_bank
@@ -70,6 +70,48 @@ knockVic2
 
   rts
   
+fromMega65F2ToMemloc
+    lda f2
+    ldy f2+1
+    jmp fromMega65ToMemloc
+
+fromMega65F4ToMemloc
+    lda f4
+    ldy f4+1
+
+fromMega65ToMemloc
+    stx .fetchlistCount
+
+    sta .fetchlistSourceAddr
+    sty .fetchlistSourceAddr+1
+    
+    jsr knockVic4
+    
+    lda #<.fetchlist
+    sta dma_lbx
+    
+    jsr knockVic2
+    
+    rts
+
+mega65DmaFetchPreWarm
+;    lda #0
+;    sta .fetchlistCount+1
+;    sta .fetchlistDestBank
+    
+    lda memloc
+    sta .fetchlistDestAddr
+    lda memloc+1
+    sta .fetchlistDestAddr+1
+    
+;    lda #5
+;    sta .fetchlistSourceBank
+    
+    lda #>.fetchlist
+    sta dma_hb
+    
+    rts
+  
   
 .dmalist
   !byte 0     ; command lsb (0=copy, 3=fill)
@@ -82,6 +124,23 @@ knockVic2
 .dmalistDestAddr
   !word 0     ; dest address
 .dmalistDestBank
+  !byte 0     ; dest bank and flags
+  
+  !byte 0     ; command msb (always zero)
+  !word 0     ; modulo. unused. always zero
+  
+
+.fetchlist
+  !byte 0     ; command lsb (0=copy, 3=fill)
+.fetchlistCount
+  !word 0     ; count
+.fetchlistSourceAddr
+  !word 0     ; source address
+;.fetchlistSourceBank
+  !byte 5     ; source bank and flags
+.fetchlistDestAddr
+  !word 0     ; dest address
+;.fetchlistDestBank
   !byte 0     ; dest bank and flags
   
   !byte 0     ; command msb (always zero)
