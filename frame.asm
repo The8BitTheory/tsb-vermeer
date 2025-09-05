@@ -59,7 +59,7 @@ frame
     
     ; copy index data (2 bytes) from reu to ram
     ldx #2
-    jsr .memExpFromF2
+    jsr .fromExpF2ToMemloc
 
 ; calculate layout data address by reading the offset and then adding it to fa
     ldy #0
@@ -78,7 +78,7 @@ frame
     sta f2+1
     
     ldx #$ff
-    jsr .memExpFromF2
+    jsr .fromExpF2ToMemloc
 
 ; get frame coordinates
     ldy #0
@@ -225,7 +225,7 @@ frame
     ; increase layout data offset by 4 (that's how long data for a frame is)
 checkNext
     ldx #$ff
-    jsr .memExpFromF2
+    jsr .fromExpF2ToMemloc
 
 ; check next type byte
 ; 0 = done
@@ -295,7 +295,7 @@ vus
     jsr basromaus
 
     ldx $69
-    jsr .memExpFromF4
+    jsr .fromExpF4ToMemloc
     
 ;    ldx f4
 ;    ldy f4+1
@@ -317,69 +317,52 @@ vus
 setup
     ; read memory type
     jsr chkcommaint
-    stx memtype
-    
-    ; read memloc. $c64d pretty much
-    jsr chkcom
-    jsr frmnum
-    jsr getadr
-    lda $14
-    sta memloc
-    lda $15
-    sta memloc+1
-    
-    ; read text-constants offset. used to be $7a00 in main ram, but now needs to be REU/M65 bank offset
-    jsr chkcom
-    jsr frmnum
-    jsr getadr
-    lda $14
-    sta tc
-    lda $15
-    sta tc+1
-    
-    ; read frame-definitions offset. used to be $0400 in main ram, but now needs to be REU/M65 bank offset
-    jsr chkcom
-    jsr frmnum
-    jsr getadr
-    lda $14
-    sta fa
-    lda $15
-    sta fa+1
-    
-    lda memtype
-    cmp #1
+    cpx #1
     bne +
     lda #<.reuPreWarm
     sta memexp_prewarm
     lda #>.reuPreWarm
     sta memexp_prewarm+1
     
-    lda #<.fromReuF2ToMemloc
-    sta memexp_f2
-    lda #>.fromReuF2ToMemloc
-    sta memexp_f2+1
-    
-    lda #<.fromReuF4ToMemloc
-    sta memexp_f4
-    lda #>.fromReuF4ToMemloc
-    sta memexp_f4+1
-    
-+   cmp #2
+    lda #<.fromReuToMemloc
+    sta memexp_toMemloc
+    lda #>.fromReuToMemloc
+    sta memexp_toMemloc+1
+    jmp .setupAddresses
+
++   cpx #2
     bne +
     lda #<mega65DmaFetchPreWarm
     sta memexp_prewarm
     lda #>mega65DmaFetchPreWarm
     sta memexp_prewarm+1
     
-    lda #<fromMega65F2ToMemloc
-    sta memexp_f2
-    lda #>fromMega65F2ToMemloc
-    sta memexp_f2+1
+    lda #<fromMega65ToMemloc
+    sta memexp_toMemloc
+    lda #>fromMega65ToMemloc
+    sta memexp_toMemloc+1
+
+.setupAddresses    
+    ; read memloc. $c64d pretty much
+    jsr parseAddressParameter
+    lda $14
+    sta memloc
+    lda $15
+    sta memloc+1
     
-    lda #<fromMega65F4ToMemloc
-    sta memexp_f4
-    lda #>fromMega65F4ToMemloc
-    sta memexp_f4+1
+    ; read text-constants offset. used to be $7a00 in main ram, but now needs to be REU/M65 bank offset
+    jsr parseAddressParameter
+    lda $14
+    sta tc
+    lda $15
+    sta tc+1
+    
+    ; read frame-definitions offset. used to be $0400 in main ram, but now needs to be REU/M65 bank offset
+    jsr parseAddressParameter
+    lda $14
+    sta fa
+    lda $15
+    sta fa+1
     
 +   rts
         
@@ -439,7 +422,7 @@ prepareForPrint
     sta f4+1
     
     ldx #3
-    jsr .memExpFromF4
+    jsr .fromExpF4ToMemloc
     
     ; jump to constant print handling (same as for vpr)
     clc         ;clear carry flag to indicate setting cursor position
@@ -474,7 +457,7 @@ prepareForPrint
     pla           ; pull length from stack
     tax           ; write to X
     
-    jmp .memExpFromF4
+    jmp .fromExpF4ToMemloc
 
 loadCoordinates
     clc
@@ -492,15 +475,16 @@ loadCoordinates
     rts
     
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
-.fromReuF4ToMemloc
+.fromExpF4ToMemloc
     lda f4
     ldy f4+1
-    jmp .fromReuToMemloc
+    jmp (memexp_toMemloc)
 
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
-.fromReuF2ToMemloc
+.fromExpF2ToMemloc
     lda f2
     ldy f2+1
+    jmp (memexp_toMemloc)
     
 ; .A=LB, .X=HB for Length
 .fromReuToMemloc
@@ -524,12 +508,7 @@ loadCoordinates
     
 .memExpPreWarm
     jmp (memexp_prewarm)
-    
-.memExpFromF2
-    jmp (memexp_f2)
-    
-.memExpFromF4
-    jmp (memexp_f4)
+
     
 .reuPreWarm
     lda #0
@@ -542,6 +521,11 @@ loadCoordinates
     sta REUC64RAM+1
     
     rts
+    
+parseAddressParameter
+    jsr chkcom
+    jsr frmnum
+    jmp getadr
     
     
 
@@ -557,12 +541,11 @@ memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 ; type of expanded memory
 ; 1=reu
 ; 2=mega65
-memtype   !byte 0
+;memtype   !byte 0
 
 ; the address
-memexp_prewarm  !word 0
-memexp_f2       !word 0
-memexp_f4       !word 0
+memexp_prewarm        !word 0
+memexp_toMemloc       !word 0
 
 
 

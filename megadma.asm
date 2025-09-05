@@ -22,17 +22,13 @@ dmaCopy
   jsr knockVic4
 
   ; parse parameters (count, source, dest)
-  jsr chkcom
-  jsr frmnum
-  jsr getadr
+  jsr parseAddressParameter
   lda $14
   sta .dmalistCount
   lda $15
   sta .dmalistCount+1
   
-  jsr chkcom
-  jsr frmnum
-  jsr getadr
+  jsr parseAddressParameter
   lda $14
   sta .dmalistSourceAddr
   lda $15
@@ -41,9 +37,7 @@ dmaCopy
   jsr chkcommaint
   stx .dmalistSourceBank
   
-  jsr chkcom
-  jsr frmnum
-  jsr getadr
+  jsr parseAddressParameter
   lda $14
   sta .dmalistDestAddr
   lda $15
@@ -70,15 +64,6 @@ knockVic2
 
   rts
   
-fromMega65F2ToMemloc
-    lda f2
-    ldy f2+1
-    jmp fromMega65ToMemloc
-
-fromMega65F4ToMemloc
-    lda f4
-    ldy f4+1
-
 fromMega65ToMemloc
     stx .fetchlistCount
 
@@ -90,23 +75,16 @@ fromMega65ToMemloc
     lda #<.fetchlist
     sta dma_lbx
     
-    jsr knockVic2
-    
-    rts
+    jmp knockVic2
 
 mega65DmaFetchPreWarm
-;    lda #0
-;    sta .fetchlistCount+1
-;    sta .fetchlistDestBank
+    ;count high-byte and source/dest banks are directly defined in the .fetchlist part below
     
     lda memloc
     sta .fetchlistDestAddr
     lda memloc+1
     sta .fetchlistDestAddr+1
-    
-;    lda #5
-;    sta .fetchlistSourceBank
-    
+
     lda #>.fetchlist
     sta dma_hb
     
