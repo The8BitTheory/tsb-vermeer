@@ -23,25 +23,19 @@ dmaCopy
 
   ; parse parameters (count, source, dest)
   jsr parseAddressParameter
-  lda $14
-  sta .dmalistCount
-  lda $15
-  sta .dmalistCount+1
-  
+  ldx #1  ;dmalistcount
+  jsr h1415toDmalist
+
   jsr parseAddressParameter
-  lda $14
-  sta .dmalistSourceAddr
-  lda $15
-  sta .dmalistSourceAddr+1
+  ldx #3  ;dmalistSourceAddr
+  jsr h1415toDmalist
   
   jsr chkcommaint
   stx .dmalistSourceBank
   
   jsr parseAddressParameter
-  lda $14
-  sta .dmalistDestAddr
-  lda $15
-  sta .dmalistDestAddr+1
+  ldx #6  ;dmalistDestAddr
+  jsr h1415toDmalist
   
   jsr chkcommaint
   stx .dmalistDestBank
@@ -49,8 +43,8 @@ dmaCopy
 ;  lda #1
 ;  sta dma_format
   
-  lda #0
-  sta dma_bank
+;  lda #0
+;  sta dma_bank
   
   lda #>.dmalist
   sta dma_hb
@@ -63,6 +57,15 @@ knockVic2
   sta $d02f
 
   rts
+  
+h1415toDmalist
+;    jsr parseAddressParameter
+    lda $14
+    sta .dmalist,x
+    inx
+    lda $15
+    sta .dmalist,x
+    rts
   
 fromMega65ToMemloc
     stx .fetchlistCount

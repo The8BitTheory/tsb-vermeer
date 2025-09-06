@@ -31,8 +31,8 @@ bsout       =   $ffd2
     jmp setup
     jmp readkeys        ;auction
     jmp dmaCopy         ;mega65
-    jmp swapWithReu
-    jmp stashToReu
+    jmp swapWithReu     ;REU
+    jmp stashToReu      ;REU
 
 
 baseY     !byte 0
@@ -367,8 +367,6 @@ setup
 +   rts
         
 printConstant
-    ;pt=tc+tx*3:tl=peek(pt):pokema,tl
-    ;d!poke$5a,tc+d!peek(pt+1):d!poke$58,mp:poke781,1:poke782,tl:sys $a3ec
     ; read constant index from parameter
     jsr .memExpPreWarm
     
@@ -383,8 +381,6 @@ printIndexAt
     jsr prepareForPrint
 
     ; read char into A and call BSOUT
-    ; for REU, f4 would be replaced with dedicated address $C64D, for example
-    ; indexed reading by x instead of y
     ldy #0
 -   lda (memloc),y
     jsr bsout
@@ -493,7 +489,7 @@ parseAddressParameter
     jsr chkcom
     jsr frmnum
     jmp getadr
-    
+        
 ; .A=LB, .X=HB for Length
 .fromReuToMemloc
     stx REUBYTES
@@ -504,11 +500,6 @@ parseAddressParameter
     
 ; set c64 address
     ;done in preWarm
-    
-;   xxxxxx00 = STASH
-;   xxxxxx01 = FETCH
-;   xxxxxx10 = SWAP
-;   00000011 = VERIFY
     lda #REU_FETCH_A__
     sta REUCOMMAND
 
@@ -573,43 +564,4 @@ border    !byte 124,123,108,106,32,116,112,119,111
 
 !source "auction.asm"
 
-; source: https://www.retro-programming.de/programming/nachschlagewerk/nice-to-know/reu-programmierung/
-;*******************************************************************************
-;*** REU-Register
-;*******************************************************************************
-REUSTATUS           = $df00         ;Statusregister (nur lesen, wird dann gelöscht!)
-REUCOMMAND          = $df01         ;Befehlsregister
-REUC64RAM           = $df02         ;RAM-Adresse im C64 (LSB/MSB)
-REURAM              = $df04         ;Speicher Adresse in der REU (LSB/MSB)
-REUBANK             = $df06         ;Bank in der REU
-REUBYTES            = $df07         ;Anzahl der betroffenen BYTES (LSB/MSB)
-REUIRQMASK          = $df09         ;Interruptmaske
-REUADRCONTROL       = $df0a         ;Adress-Kontroll-Register
 
-;*******************************************************************************
-;*** REU-Befehle
-;*******************************************************************************
- 
-;*** Standardbefehle mit AUTOLOAD, ohne $ff00
-REU_STASH_A__       = $fc           ;kopiere C64 -> REU
-REU_FETCH_A__       = $fd           ;kopiere REU -> C64
-REU_SWAP_A__        = $fe           ;Speicherbereich tauschen
-REU_VERIFY_A__      = $ff           ;Speicherbereich vergleichen
- 
-;*** mit AUTOLOAD und mit $ff00
-REU_STASH_A_F       = $ec           ;kopiere C64 -> REU
-REU_FETCH_A_F       = $ed           ;kopiere REU -> C64
-REU_SWAP_A_F        = $ee           ;Speicherbereich tauschen
-REU_VERIFY_A_F      = $ef           ;Speicherbereich vergleichen
- 
-;*** ohne AUTOLOAD, ohne $ff00
-REU_STASH____       = $dc           ;kopiere C64 -> REU
-REU_FETCH____       = $dd           ;kopiere REU -> C64
-REU_SWAP____        = $de           ;Speicherbereich tauschen
-REU_VERIFY____      = $df           ;Speicherbereich vergleichen
- 
-;*** ohne AUTOLOAD, mit $ff00
-REU_STASH___F       = $cc           ;kopiere C64 -> REU
-REU_FETCH___F       = $cd           ;kopiere REU -> C64
-REU_SWAP___F        = $ce           ;Speicherbereich tauschen
-REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
