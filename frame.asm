@@ -486,6 +486,14 @@ loadCoordinates
     ldy f2+1
     jmp (memexp_toMemloc)
     
+.memExpPreWarm
+    jmp (memexp_prewarm)
+
+parseAddressParameter
+    jsr chkcom
+    jsr frmnum
+    jmp getadr
+    
 ; .A=LB, .X=HB for Length
 .fromReuToMemloc
     stx REUBYTES
@@ -506,10 +514,6 @@ loadCoordinates
 
     rts
     
-.memExpPreWarm
-    jmp (memexp_prewarm)
-
-    
 .reuPreWarm
     lda #0
     sta REUBYTES+1
@@ -521,13 +525,7 @@ loadCoordinates
     sta REUC64RAM+1
     
     rts
-    
-parseAddressParameter
-    jsr chkcom
-    jsr frmnum
-    jmp getadr
-    
-    
+
 
 fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
