@@ -18,3 +18,4 @@ memhook.inc
 tsb.neo.prg
 tsbneo.asm
 tsbneo.prg
+*.crt

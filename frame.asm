@@ -31,8 +31,8 @@ bsout       =   $ffd2
     jmp setup
     jmp readkeys        ;auction
     jmp dmaCopy         ;mega65
-    jmp knockVic4           ;mega65
-    jmp knockVic2
+    jmp swapWithReu
+    jmp stashToReu
 
 
 baseY     !byte 0
@@ -567,7 +567,7 @@ cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
 
-;!source "loadfromreu.asm"
+!source "loadfromreu.asm"
 
 !source "megadma.asm"
 

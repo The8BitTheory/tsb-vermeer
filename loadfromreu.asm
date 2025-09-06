@@ -53,7 +53,38 @@ REU_SWAP___F        = $ce           ;Speicherbereich tauschen
 REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 !zone load_from_reu
-loadFromReu
+
+swapWithReu
+    jsr .setReuBasicAddress
+    lda #REU_SWAP____
+    sta REUCOMMAND
+    
+    ;sei
+    
+    ; CURLIN <- Zeilennummer aus $0803/$0804 (erste Zeile bei $0801)
+    LDA $0803
+    STA $39        ; CURLIN low
+    LDA $0804
+    STA $3A        ; CURLIN high
+
+    ; TXTPTR <- Adresse erstes Token (bei $0801 ist das $0801+4 = $0805)
+    jsr $a68e
+    
+    ;cli
+    
+    ; 4) In BASIC-Interpreter einsteigen
+    JMP $A7AE       
+   
+
+
+stashToReu
+    jsr .setReuBasicAddress
+    lda #REU_STASH____
+    sta REUCOMMAND
+
+    rts
+
+.setReuBasicAddress
 ; calculate and store length
     sec
     lda $2d
@@ -68,6 +99,7 @@ loadFromReu
     lda #0
     sta REURAM
     sta REURAM+1
+    lda #1
     sta REUBANK ; bank
     
 ; set c64 address
@@ -75,16 +107,7 @@ loadFromReu
     sta REUC64RAM
     lda $2c
     sta REUC64RAM+1
-
-;   xxxxxx00 = STASH
-;   xxxxxx01 = FETCH
-;   xxxxxx10 = SWAP
-;   00000011 = VERIFY
-    lda #%10010000
-    sta REUCOMMAND
-
+    
     rts
-
-
 
  
