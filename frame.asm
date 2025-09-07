@@ -29,8 +29,8 @@ frmnum      = $ad8a
 getadr      = $b7f7
 
 
-memExpPreWarm    = $7f00
-memexp_toMemloc   = $7f00+3
+memExpPreWarm    = $7e00
+memexp_toMemloc   = $7e00+3
 ;memexp_swapBasic  = $7f00+6
 
 

@@ -1,4 +1,4 @@
-*=$7f00
+*=$7e00
 
 ; tt:txttab. start of basic program text
 ; vt:vartab. start of variables = end of basic program text

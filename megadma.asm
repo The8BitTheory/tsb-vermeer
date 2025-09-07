@@ -1,4 +1,4 @@
-*=$7f00
+*=$7e00
 
 !zone mega65dma
 dma_format= $d703
@@ -59,10 +59,11 @@ dmaCopy
   lda #>.dmalist
   sta dma_hb
   
+.execAndClose
   lda #<.dmalist
   sta dma_lbx
 
-knockVic2  
+;knockVic2  
   lda #0
   sta $d02f
 
@@ -85,10 +86,7 @@ fromMega65ToMemloc
     
     jsr knockVic4
     
-    lda #<.dmalist
-    sta dma_lbx
-    
-    jmp knockVic2
+    jmp .execAndClose
 
 mega65DmaFetchPreWarm
     ;count high-byte and source/dest banks are directly defined in the .fetchlist part below
@@ -110,7 +108,79 @@ mega65DmaFetchPreWarm
     rts
     
 .swapBasic
-    rts
+    ; copy from ram ($0800 at bank 0) to temp high bank ($0800 at bank 1)
+    sec
+    lda $2d
+    sbc $2b
+    sta .dmalistCount
+    
+    lda $2e
+    sbc $2c
+    sta .dmalistCount+1
+    
+    lda $2b
+    sta .dmalistSourceAddr
+    lda $2c
+    sta .dmalistSourceAddr+1
+    
+    lda #0
+    sta .dmalistSourceBank
+    sta .dmalistDestAddr
+    
+    lda #08
+    sta .dmalistDestAddr+1
+    
+    lda #1
+    sta .dmalistDestBank
+
+    jsr knockVic4
+
+;    lda #0 
+;    sta dma_bank
+    
+;    lda #>.dmalist
+;    sta dma_hb
+    
+    lda #<.dmalist
+    sta dma_lbx
+        
+    ; copy from ext ($8000 at bank 5) to ram ($0801 at bank 0)
+    lda #0
+    sta .dmalistSourceAddr
+    sta .dmalistDestBank
+    
+    lda #$80
+    sta .dmalistSourceAddr+1
+    
+    lda #5
+    sta .dmalistSourceBank
+    
+    lda $2c
+    sta .dmalistDestAddr
+    lda $2d
+    sta .dmalistDestAddr+1
+        
+    lda #<.dmalist
+    sta dma_lbx
+
+    ; copy from temp high ($0800 at bank 1) bank to ext ($8000 at bank 5)
+    ;lda #0
+    ;sta .dmalistSourceAddr
+    lda #08
+    sta .dmalistSourceAddr+1
+    
+    lda #1
+    sta .dmalistSourceBank
+    
+    lda #0
+    sta .dmalistDestAddr
+    lda #$80
+    sta .dmalistDestAddr+1
+    
+    lda #5
+    sta .dmalistDestBank
+
+    jmp .execAndClose
 
 parseAddressParameter
     jsr chkcom
