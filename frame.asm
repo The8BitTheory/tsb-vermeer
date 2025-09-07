@@ -105,7 +105,7 @@ frame
     ; zeile mit rahmendaten vorbereiten
     ; $0137 für rahmenzeile (BD$). folgende Zeichen umgekehrt 111,183,112,180,32,170,108,187,188
     ; $0b für länge (8 zeichen)
-    ; write color 6 ($a6 evtl nur positiv, wert für color-ram evtl in $20?)
+
 ;    ldx #fb
 ;    stx $a6
 
@@ -119,10 +119,26 @@ frame
 
     jsr basromaus
     
+    ; draw shadow of frame
+    inc zeileanf
+    inc spalteanf
+    ; calc addresses for color-ram
+    lda #1
+    sta $a6
+    jsr movez
+    
+    ; write color value to calculated addresses
+    lda #sb
+    jsr mve9a
+    
+    
+    ; draw frame
     ; call INSERT BD$,BY,BX,BW,BH,#FB
     ; compute address (parameters are set)
-    lda #0
-    sta $a6
+    dec zeileanf
+    dec spalteanf
+    
+    dec $a6
     jsr movez
     
     ; screen-ram work for box
@@ -135,6 +151,7 @@ frame
     lda #fb
     jsr mve9a
 
+    ; fill frame with black
     ; call FILL BY+1,BX+1,BW-2,BH-2,32,1
     inc zeileanf
     inc spalteanf
@@ -144,8 +161,7 @@ frame
     dec zeilenanz
 
     ; calculate fill dimensions for screen-ram
-    lda #0
-    sta $a6
+    dec $a6
     jsr movez
     
     ; set fill character (space)
@@ -162,63 +178,7 @@ frame
     ; write to color-ram
     jsr mve9a
     
-    
-    ; horizontal shadow below frame
-    ; call FCOL BY+BH,BX+1,BW,1,#sb
-    clc
-    lda tempY         ;load y
-    adc tempH         ;add height
-    sta zeileanf      ;store y
-    
-;    clc
-    lda tempX         ;load x
-    adc #1            ;add 1
-    sta spalteanf     ;store x
-    
-;    clc
-    lda tempW         ;load width
-    sta spaltenanz    ;store width
-    
-;    clc
-    lda #1            ;load height
-    sta zeilenanz     ;store height
-    
-    ; calc addresses for color-ram
-    inc $a6
-    jsr movez
-    
-    ; write color value to calculated addresses
-    lda #sb
-    jsr mve9a
-    
-    ; vertical shadow right of frame
-    ; call FCOL BY+1,BX+BW,1,BH,#sb
-    clc
-    lda tempY         ;load y
-    adc #1            ;add 1
-    sta zeileanf      ;store y
-    
-;    clc
-    lda tempX         ;load x
-    adc tempW         ;add width
-    sta spalteanf     ;store x
-    
-;    clc
-    lda #1            ;load 1
-    sta spaltenanz    ;store width
-    
-;    clc
-    lda tempH         ;load height
-    sta zeilenanz     ;store height
-    
-    ; calc addresses for color-ram
-    inc $a6
-    jsr movez
-    
-    ; write color value to calculated addresses
-    lda #sb
-    jsr mve9a
-    
+        
     jsr basromein
     jmp +
     
