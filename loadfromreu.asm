@@ -69,8 +69,6 @@ swapWithReu
     lda #REU_SWAP____
     sta REUCOMMAND
     
-    ;sei
-    
     ; CURLIN <- Zeilennummer aus $0803/$0804 (erste Zeile bei $0801)
     LDA $0803
     STA $39        ; CURLIN low
@@ -79,8 +77,6 @@ swapWithReu
 
     ; TXTPTR <- Adresse erstes Token (bei $0801 ist das $0801+4 = $0805)
     jsr $a68e
-    
-    ;cli
     
     ; 4) In BASIC-Interpreter einsteigen
     JMP $A7AE       

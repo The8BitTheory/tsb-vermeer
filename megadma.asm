@@ -135,11 +135,11 @@ mega65DmaFetchPreWarm
 
     jsr knockVic4
 
-;    lda #0 
-;    sta dma_bank
+    lda #0 
+    sta dma_bank
     
-;    lda #>.dmalist
-;    sta dma_hb
+    lda #>.dmalist
+    sta dma_hb
     
     lda #<.dmalist
     sta dma_lbx
@@ -164,8 +164,8 @@ mega65DmaFetchPreWarm
     sta dma_lbx
 
     ; copy from temp high ($0800 at bank 1) bank to ext ($8000 at bank 5)
-    ;lda #0
-    ;sta .dmalistSourceAddr
+    lda #0
+    sta .dmalistSourceAddr
     lda #08
     sta .dmalistSourceAddr+1
     
@@ -180,15 +180,23 @@ mega65DmaFetchPreWarm
     lda #5
     sta .dmalistDestBank
 
-    jmp .execAndClose
+    jsr .execAndClose
+    
+    LDA $0803
+    STA $39        ; CURLIN low
+    LDA $0804
+    STA $3A        ; CURLIN high
+
+    ; TXTPTR <- Adresse erstes Token (bei $0801 ist das $0801+4 = $0805)
+    jsr $a68e
+    
+    ; 4) In BASIC-Interpreter einsteigen
+    JMP $A7AE     
 
 parseAddressParameter
     jsr chkcom
     jsr frmnum
     jmp getadr
-    
-;todo:
-; * routine that swaps basic program between main memory and higher bank
   
 .dmalist
   !byte 0     ; command lsb (0=copy, 3=fill)
