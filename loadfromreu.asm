@@ -1,3 +1,5 @@
+*=$7f00
+
 ; tt:txttab. start of basic program text
 ; vt:vartab. start of variables = end of basic program text
 ; bl:basic length
@@ -52,7 +54,14 @@ REU_FETCH___F       = $cd           ;kopiere REU -> C64
 REU_SWAP___F        = $ce           ;Speicherbereich tauschen
 REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
+
+memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+
 !zone load_from_reu
+
+    jmp reuPreWarm
+    jmp fromReuToMemloc
+    ;jmp swapWithReu    ;enable this when more jmp statements are added
 
 ; routine that swaps basic program between main memory and higher bank
 swapWithReu

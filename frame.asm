@@ -1,38 +1,46 @@
 ;6502 assembly
 
-*= $7b00
+*= $0400
 
 !to "frame.bin.prg",cbm
 
-helpvec     =   $b0
+helpvec     = $b0
   
-zeileanf    =   $C5DF
-spalteanf   =   $C5E0
-spaltenanz  =   $C5E1
-zeilenanz   =   $C5E2
+zeileanf    = $C5DF
+spalteanf   = $C5E0
+spaltenanz  = $C5E1
+zeilenanz   = $C5E2
 
-basromaus   =   $8e5f
-basromein   =   $8e3a
+basromaus   = $8e5f
+basromein   = $8e3a
 
-mve9a       =   $9ecb
+mve9a       = $9ecb
 
-movez       =   $a0b1
-mkbox       =   $a158
-use2        =   $a35a
-use3        =   $a3bd
+movez       = $a0b1
+mkbox       = $a158
+use2        = $a35a
+use3        = $a3bd
 
-chkcommaint =   $e200
-;chkcommaint =   $8b89
-bsout       =   $ffd2
+chkcommaint = $e200
+bsout       = $ffd2
+
+chkcom      = $aefd
+frmnum      = $ad8a
+getadr      = $b7f7
+
+
+memExpPreWarm    = $7f00
+memexp_toMemloc   = $7f00+3
+;memexp_swapBasic  = $7f00+6
 
 
     jmp frame
     jmp printConstant
     jmp setup
     jmp readkeys        ;auction
-    jmp dmaCopy         ;mega65
-    jmp swapWithReu     ;REU
-    jmp swapWithReu     ;REU - to be replaced. just acts as placeholder to keep following addresses stable
+;    jmp dmaCopy         ;mega65
+;    jmp swapWithReu     ;REU
+;    jmp swapWithReu     ;REU - to be replaced. just acts as placeholder to keep following addresses stable
 
 
 baseY     !byte 0
@@ -43,7 +51,7 @@ baseH     !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
-    jsr .memExpPreWarm
+    jsr memExpPreWarm
 
     jsr chkcommaint
     stx fr
@@ -275,32 +283,8 @@ vus
 setup
     ; read memory type
     jsr chkcommaint
-    cpx #1
-    bne +
-    lda #<reuPreWarm
-    sta memexp_prewarm
-    lda #>reuPreWarm
-    sta memexp_prewarm+1
+    stx memtype
     
-    lda #<fromReuToMemloc
-    sta memexp_toMemloc
-    lda #>fromReuToMemloc
-    sta memexp_toMemloc+1
-    jmp .setupAddresses
-
-+   cpx #2
-    bne +
-    lda #<mega65DmaFetchPreWarm
-    sta memexp_prewarm
-    lda #>mega65DmaFetchPreWarm
-    sta memexp_prewarm+1
-    
-    lda #<fromMega65ToMemloc
-    sta memexp_toMemloc
-    lda #>fromMega65ToMemloc
-    sta memexp_toMemloc+1
-
-.setupAddresses    
     ; read memloc. $c64d pretty much
     jsr parseAddressParameter
     lda $14
@@ -322,11 +306,11 @@ setup
     lda $15
     sta fa+1
     
-+   rts
+    rts
         
 printConstant
     ; read constant index from parameter
-    jsr .memExpPreWarm
+    jsr memExpPreWarm
     
     jsr chkcommaint
     stx zeileanf
@@ -432,17 +416,14 @@ loadCoordinates
 .fromExpF4ToMemloc
     lda f4
     ldy f4+1
-    jmp (memexp_toMemloc)
+    jmp memexp_toMemloc
 
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
 .fromExpF2ToMemloc
     lda f2
     ldy f2+1
-    jmp (memexp_toMemloc)
+    jmp memexp_toMemloc
     
-.memExpPreWarm
-    jmp (memexp_prewarm)
-
 parseAddressParameter
     jsr chkcom
     jsr frmnum
@@ -461,12 +442,7 @@ memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 ; type of expanded memory
 ; 1=reu
 ; 2=mega65
-;memtype   !byte 0
-
-; the address
-memexp_prewarm        !word 0
-memexp_toMemloc       !word 0
-
+memtype   !byte 0
 
 
 fb = 6 ; foreground border
@@ -485,9 +461,9 @@ cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
 
-!source "loadfromreu.asm"
+;!source "loadfromreu.asm"
 
-!source "megadma.asm"
+;!source "megadma.asm"
 
 !source "auction.asm"
 

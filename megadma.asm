@@ -1,13 +1,24 @@
+*=$7f00
+
 !zone mega65dma
 dma_format= $d703
 dma_bank  = $d702 ;bank and flags
 dma_hb    = $d701 ;high byte of address
 dma_lbx   = $d700 ;low byte of address and execute
 
-chkcom      = $aefd
+chkcom    = $aefd
+frmnum    = $ad8a
+getadr    = $b7f7
+
+memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 chkcommaint = $e200
-frmnum      = $ad8a
-getadr      = $b7f7
+
+
+  jmp mega65DmaFetchPreWarm
+  jmp fromMega65ToMemloc
+  jmp .swapBasic
+  jmp dmaCopy
+  
 
 knockVic4
   lda #$47      ;(dec 71) "G"
@@ -15,7 +26,6 @@ knockVic4
   lda #$53      ;(dec 83) "S"
   sta $d02f
   rts
-  
   
 ; generic stash/fetch command. used for copying ressource files to higher banks upon loading
 dmaCopy
@@ -98,6 +108,14 @@ mega65DmaFetchPreWarm
     sta dma_hb
     
     rts
+    
+.swapBasic
+    rts
+
+parseAddressParameter
+    jsr chkcom
+    jsr frmnum
+    jmp getadr
     
 ;todo:
 ; * routine that swaps basic program between main memory and higher bank
