@@ -92,12 +92,10 @@ frame
     
     lda (memloc),y
     sta spaltenanz
-    sta tempW
     sta baseW
     iny
     lda (memloc),y
     sta zeilenanz
-    sta tempH
     sta baseH
     iny
     sty fy
@@ -478,12 +476,11 @@ parseAddressParameter
     rts
 
 
+tc        !word $7a00 ; address where the binary text constants are stored. todo: parse from SYS or POKE
 fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
 fy        !byte 0     ; offset in frame-data (y offset in 256 byte window)
-
-tc        !word $7a00 ; address where the binary text constants are stored. todo: parse from SYS or POKE
-f4        !word 0     ; 
+f4        !word 0     ; current value of fc+offset
 
 memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 
@@ -506,10 +503,6 @@ fr        !byte 0
 
 tempY     !byte 0
 tempX     !byte 0
-
-;used for frame fill and shadows to keep original values of frame's width and height
-tempW     !byte 0
-tempH     !byte 0
 
 tempIndex !word 0
 

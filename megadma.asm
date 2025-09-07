@@ -43,8 +43,8 @@ dmaCopy
 ;  lda #1
 ;  sta dma_format
   
-;  lda #0
-;  sta dma_bank
+  lda #0
+  sta dma_bank
   
   lda #>.dmalist
   sta dma_hb
@@ -59,7 +59,6 @@ knockVic2
   rts
   
 h1415toDmalist
-;    jsr parseAddressParameter
     lda $14
     sta .dmalist,x
     inx
