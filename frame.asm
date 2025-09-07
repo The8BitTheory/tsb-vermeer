@@ -1,6 +1,6 @@
 ;6502 assembly
 
-*= $7c00
+*= $7b00
 
 !to "frame.bin.prg",cbm
 
@@ -32,7 +32,7 @@ bsout       =   $ffd2
     jmp readkeys        ;auction
     jmp dmaCopy         ;mega65
     jmp swapWithReu     ;REU
-    jmp stashToReu      ;REU
+    jmp swapWithReu     ;REU - to be replaced. just acts as placeholder to keep following addresses stable
 
 
 baseY     !byte 0
@@ -277,14 +277,14 @@ setup
     jsr chkcommaint
     cpx #1
     bne +
-    lda #<.reuPreWarm
+    lda #<reuPreWarm
     sta memexp_prewarm
-    lda #>.reuPreWarm
+    lda #>reuPreWarm
     sta memexp_prewarm+1
     
-    lda #<.fromReuToMemloc
+    lda #<fromReuToMemloc
     sta memexp_toMemloc
-    lda #>.fromReuToMemloc
+    lda #>fromReuToMemloc
     sta memexp_toMemloc+1
     jmp .setupAddresses
 
@@ -448,32 +448,6 @@ parseAddressParameter
     jsr frmnum
     jmp getadr
         
-; .A=LB, .X=HB for Length
-.fromReuToMemloc
-    stx REUBYTES
-
-; set reu address
-    sta REURAM
-    sty REURAM+1
-    
-; set c64 address
-    ;done in preWarm
-    lda #REU_FETCH_A__
-    sta REUCOMMAND
-
-    rts
-    
-.reuPreWarm
-    lda #0
-    sta REUBYTES+1
-    sta REUBANK
-    
-    lda memloc
-    sta REUC64RAM
-    lda memloc+1
-    sta REUC64RAM+1
-    
-    rts
 
 
 tc        !word $7a00 ; address where the binary text constants are stored. todo: parse from SYS or POKE

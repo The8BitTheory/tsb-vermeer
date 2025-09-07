@@ -1,5 +1,3 @@
-
-
 !zone mega65dma
 dma_format= $d703
 dma_bank  = $d702 ;bank and flags
@@ -18,6 +16,8 @@ knockVic4
   sta $d02f
   rts
   
+  
+; generic stash/fetch command. used for copying ressource files to higher banks upon loading
 dmaCopy
   jsr knockVic4
 
@@ -65,33 +65,42 @@ h1415toDmalist
     lda $15
     sta .dmalist,x
     rts
-  
-fromMega65ToMemloc
-    stx .fetchlistCount
 
-    sta .fetchlistSourceAddr
-    sty .fetchlistSourceAddr+1
+; used to copy ressources from higher banks into dma-working memory
+fromMega65ToMemloc
+    stx .dmalistCount
+
+    sta .dmalistSourceAddr
+    sty .dmalistSourceAddr+1
     
     jsr knockVic4
     
-    lda #<.fetchlist
+    lda #<.dmalist
     sta dma_lbx
     
     jmp knockVic2
 
 mega65DmaFetchPreWarm
     ;count high-byte and source/dest banks are directly defined in the .fetchlist part below
+    lda #5
+    sta .dmalistSourceBank
     
     lda memloc
-    sta .fetchlistDestAddr
+    sta .dmalistDestAddr
     lda memloc+1
-    sta .fetchlistDestAddr+1
+    sta .dmalistDestAddr+1
 
-    lda #>.fetchlist
+    lda #0
+    sta dma_bank
+    sta .dmalistDestBank
+  
+    lda #>.dmalist
     sta dma_hb
     
     rts
-  
+    
+;todo:
+; * routine that swaps basic program between main memory and higher bank
   
 .dmalist
   !byte 0     ; command lsb (0=copy, 3=fill)
@@ -108,21 +117,4 @@ mega65DmaFetchPreWarm
   
   !byte 0     ; command msb (always zero)
   !word 0     ; modulo. unused. always zero
-  
 
-.fetchlist
-  !byte 0     ; command lsb (0=copy, 3=fill)
-.fetchlistCount
-  !word 0     ; count
-.fetchlistSourceAddr
-  !word 0     ; source address
-;.fetchlistSourceBank
-  !byte 5     ; source bank and flags
-.fetchlistDestAddr
-  !word 0     ; dest address
-;.fetchlistDestBank
-  !byte 0     ; dest bank and flags
-  
-  !byte 0     ; command msb (always zero)
-  !word 0     ; modulo. unused. always zero
-  

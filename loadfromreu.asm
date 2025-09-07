@@ -54,6 +54,7 @@ REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 !zone load_from_reu
 
+; routine that swaps basic program between main memory and higher bank
 swapWithReu
     jsr .setReuBasicAddress
     lda #REU_SWAP____
@@ -74,15 +75,6 @@ swapWithReu
     
     ; 4) In BASIC-Interpreter einsteigen
     JMP $A7AE       
-   
-
-
-stashToReu
-    jsr .setReuBasicAddress
-    lda #REU_STASH____
-    sta REUCOMMAND
-
-    rts
 
 .setReuBasicAddress
 ; calculate and store length
@@ -110,4 +102,29 @@ stashToReu
     
     rts
 
- 
+ ; .A=LB, .X=HB for Length
+fromReuToMemloc
+    stx REUBYTES
+
+; set reu address
+    sta REURAM
+    sty REURAM+1
+    
+; set c64 address
+    ;done in preWarm
+    lda #REU_FETCH_A__
+    sta REUCOMMAND
+
+    rts
+    
+reuPreWarm
+    lda #0
+    sta REUBYTES+1
+    sta REUBANK
+    
+    lda memloc
+    sta REUC64RAM
+    lda memloc+1
+    sta REUC64RAM+1
+    
+    rts
