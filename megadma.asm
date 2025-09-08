@@ -16,11 +16,14 @@ getadr    = $b7f7
 memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 chkcommaint = $e200
 
-
-  jmp mega65DmaFetchPreWarm
-  jmp fromMega65ToMemloc
-  jmp .swapBasic
-  jmp dmaCopy
+;NOPs are added to keep compatibility with JMP instructions of other CPUs
+  bra mega65DmaFetchPreWarm
+!byte $ea ;nop
+  bra fromMega65ToMemloc
+!byte $ea ;nop
+  bra .swapBasic
+!byte $ea ;nop
+  bra dmaCopy
   
 
 .execDmaList
@@ -189,7 +192,6 @@ parseAddressParameter
   !word 0     ; dest address
 .dmalistDestBank
   !byte 0     ; dest bank and flags
-  
   !byte 0     ; command msb (always zero)
   !word 0     ; modulo. unused. always zero
 
