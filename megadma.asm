@@ -1,5 +1,6 @@
 *=$7e00
 
+!cpu m65
 !to "megadma.bin.prg",cbm
 
 !zone mega65dma
@@ -49,27 +50,28 @@ chkcommaint = $e200
 ; generic stash/fetch command. used for copying ressource files to higher banks upon loading
 dmaCopy
   ; parse parameters (count, source, dest)
-  jsr parseAddressParameter
-  ldx #1  ;dmalistcount
-  jsr h1415toDmalist
-
-  jsr parseAddressParameter
-  ldx #3  ;dmalistSourceAddr
-  jsr h1415toDmalist
   
-  jsr chkcommaint
+  ldx #1  ;dmalistcount
+  bsr h1415toDmalist
+
+  ldx #3  ;dmalistSourceAddr
+  bsr h1415toDmalist
+  
+  bsr chkcommaint
   stx .dmalistSourceBank
   
-  jsr parseAddressParameter
   ldx #6  ;dmalistDestAddr
-  jsr h1415toDmalist
+  bsr h1415toDmalist
   
-  jsr chkcommaint
+  bsr chkcommaint
   stx .dmalistDestBank
 
-  jmp .execDmaList
+  bra .execDmaList
   
 h1415toDmalist
+    phx
+    bsr parseAddressParameter
+    plx
     lda $14
     sta .dmalist,x
     inx
@@ -84,7 +86,7 @@ fromMega65ToMemloc
     sta .dmalistSourceAddr
     sty .dmalistSourceAddr+1
         
-    jmp .execDmaList
+    bra .execDmaList
 
 mega65DmaFetchPreWarm
     ;count high-byte and source/dest banks are directly defined in the .fetchlist part below
@@ -153,7 +155,7 @@ mega65DmaFetchPreWarm
     lda #.basic_temp_bank
     sta .dmalistDestBank
 
-    jsr .execDmaList
+    bsr .execDmaList
     
     ; remove chain-byte from dmalist-command
     lda #0
@@ -211,5 +213,3 @@ parseAddressParameter
   !byte 0
   !word 0
   
-
-; copy from temp to high
