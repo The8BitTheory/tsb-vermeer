@@ -67,7 +67,31 @@ memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 
 ; routine that swaps basic program between main memory and higher bank
 swapWithReu
-    jsr .setReuBasicAddress
+; calculate and store length
+    sec
+    lda $2d
+    sbc $2b
+    sta REUBYTES
+    
+    lda $2e
+    sbc $2c
+    sta REUBYTES+1
+    
+; set reu address
+    lda #0
+    sta REURAM
+    lda #$80
+    sta REURAM+1
+    
+    lda #0
+    sta REUBANK ; bank
+    
+; set c64 address
+    lda $2b
+    sta REUC64RAM
+    lda $2c
+    sta REUC64RAM+1
+    
     lda #REU_SWAP____
     sta REUCOMMAND
     
@@ -83,31 +107,6 @@ swapWithReu
     ; 4) In BASIC-Interpreter einsteigen
     JMP $A7AE       
 
-.setReuBasicAddress
-; calculate and store length
-    sec
-    lda $2d
-    sbc $2b
-    sta REUBYTES
-    
-    lda $2e
-    sbc $2c
-    sta REUBYTES+1
-    
-; set reu address
-    lda #0
-    sta REURAM
-    sta REURAM+1
-    lda #1
-    sta REUBANK ; bank
-    
-; set c64 address
-    lda $2b
-    sta REUC64RAM
-    lda $2c
-    sta REUC64RAM+1
-    
-    rts
 
  ; .A=LB, .X=HB for Length
 fromReuToMemloc

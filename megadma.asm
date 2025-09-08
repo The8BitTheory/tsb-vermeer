@@ -38,9 +38,6 @@ chkcommaint = $e200
   lda #>.dmalist
   sta dma_hb
   
-  lda #>.dmalist
-  sta dma_hb
-  
   lda #<.dmalist
   sta dma_lbx
 
@@ -104,9 +101,22 @@ mega65DmaFetchPreWarm
     sta .dmalistCount+1
     
     rts
-    
+
+
+; mega65 dma doesn't have swap capability (yet?)
+;  so we'll copy from ram to temporary space
+;  then the "other" basic program from high-ram (was put there when it was first loaded) to ram
+;  then the "previous" basic program from temporary space to high-ram
+; this assumes we're only swapping between two basic programs. we'll see if that holds
+
+.basic_ram_bank = $0
+.basic_temp_addr = $8000
+.basic_temp_bank = $1
+.basic_high_addr = $8000
+.basic_high_bank = $5
+
 .swapBasic
-    ; copy from ram ($0800 at bank 0) to temp high bank ($0800 at bank 1)
+    ; copy from ram ($0800 at bank 0) to temp ($8000 at bank 1)
     sec
     lda $2d
     sbc $2b
@@ -120,52 +130,58 @@ mega65DmaFetchPreWarm
     sta .dmalistSourceAddr
     lda $2c
     sta .dmalistSourceAddr+1
-    
-    lda #0
+
+    lda #.basic_ram_bank
     sta .dmalistSourceBank
+    
+    lda #<.basic_temp_addr
     sta .dmalistDestAddr
     
-    lda #08
+    lda #>.basic_temp_addr
     sta .dmalistDestAddr+1
     
-    lda #1
+    lda #.basic_temp_bank
     sta .dmalistDestBank
 
     jsr .execDmaList
         
-    ; copy from ext ($8000 at bank 5) to ram ($0801 at bank 0)
-    lda #0
+    ; copy from high ($8000 at bank 5) to ram ($0801 at bank 0)
+    lda #<.basic_high_addr
     sta .dmalistSourceAddr
-    sta .dmalistDestBank
     
-    lda #$80
+    lda #>.basic_high_addr
     sta .dmalistSourceAddr+1
     
-    lda #5
+    lda #.basic_high_bank
     sta .dmalistSourceBank
     
+    lda $2b
+    sta .dmalistDestAddr
     lda $2c
-    sta .dmalistDestAddr
-    lda $2d
     sta .dmalistDestAddr+1
-        
+
+    lda #.basic_ram_bank
+    sta .dmalistDestBank
+    
     jsr .execDmaList
 
-    ; copy from temp high ($0800 at bank 1) bank to ext ($8000 at bank 5)
-    lda #0
+    ; copy from temp ($8000 at bank 1) to high ($8000 at bank 5)
+    lda #<.basic_temp_addr
     sta .dmalistSourceAddr
-    lda #08
+    
+    lda #>.basic_temp_addr
     sta .dmalistSourceAddr+1
     
-    lda #1
+    lda #.basic_temp_bank
     sta .dmalistSourceBank
     
-    lda #0
+    lda #<.basic_high_addr
     sta .dmalistDestAddr
-    lda #$80
+    
+    lda #>.basic_high_addr
     sta .dmalistDestAddr+1
     
-    lda #5
+    lda #.basic_high_bank
     sta .dmalistDestBank
 
     jsr .execDmaList
