@@ -4,6 +4,9 @@
 !to "megadma.bin.prg",cbm
 
 !zone mega65dma
+
+key_register = $d02f
+
 dma_format= $d703
 dma_bank  = $d702 ;bank and flags
 dma_hb    = $d701 ;high byte of address
@@ -29,9 +32,9 @@ chkcommaint = $e200
 .execDmaList
 ;knockVic4
   lda #$47      ;(dec 71) "G"
-  sta $d02f  
+  sta key_register  
   lda #$53      ;(dec 83) "S"
-  sta $d02f
+  sta key_register
   
 ;  lda #1
 ;  sta dma_format
@@ -47,7 +50,7 @@ chkcommaint = $e200
 
 ;knockVic2  
   lda #0
-  sta $d02f
+  sta key_register
   rts
   
 ; generic stash/fetch command. used for copying ressource files to higher banks upon loading
@@ -60,13 +63,13 @@ dmaCopy
   ldx #3  ;dmalistSourceAddr
   bsr h1415toDmalist
   
-  bsr chkcommaint
+  jsr chkcommaint
   stx .dmalistSourceBank
   
   ldx #6  ;dmalistDestAddr
   bsr h1415toDmalist
   
-  bsr chkcommaint
+  jsr chkcommaint
   stx .dmalistDestBank
 
   bra .execDmaList
