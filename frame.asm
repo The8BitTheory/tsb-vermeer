@@ -38,10 +38,6 @@ memexp_toMemloc   = $7e00+3
     jmp printConstant
     jmp setup
     jmp readkeys        ;auction
-;    jmp dmaCopy         ;mega65
-;    jmp swapWithReu     ;REU
-;    jmp swapWithReu     ;REU - to be replaced. just acts as placeholder to keep following addresses stable
-
 
 baseY     !byte 0
 baseX     !byte 0
