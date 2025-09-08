@@ -1,5 +1,7 @@
 *=$7e00
 
+!to "megadma.bin.prg",cbm
+
 !zone mega65dma
 dma_format= $d703
 dma_bank  = $d702 ;bank and flags
@@ -20,17 +22,35 @@ chkcommaint = $e200
   jmp dmaCopy
   
 
-knockVic4
+.execDmaList
+;knockVic4
   lda #$47      ;(dec 71) "G"
   sta $d02f  
   lda #$53      ;(dec 83) "S"
+  sta $d02f
+  
+;  lda #1
+;  sta dma_format
+  
+  lda #0
+  sta dma_bank
+  
+  lda #>.dmalist
+  sta dma_hb
+  
+  lda #>.dmalist
+  sta dma_hb
+  
+  lda #<.dmalist
+  sta dma_lbx
+
+;knockVic2  
+  lda #0
   sta $d02f
   rts
   
 ; generic stash/fetch command. used for copying ressource files to higher banks upon loading
 dmaCopy
-  jsr knockVic4
-
   ; parse parameters (count, source, dest)
   jsr parseAddressParameter
   ldx #1  ;dmalistcount
@@ -49,25 +69,8 @@ dmaCopy
   
   jsr chkcommaint
   stx .dmalistDestBank
-  
-;  lda #1
-;  sta dma_format
-  
-  lda #0
-  sta dma_bank
-  
-  lda #>.dmalist
-  sta dma_hb
-  
-.execAndClose
-  lda #<.dmalist
-  sta dma_lbx
 
-;knockVic2  
-  lda #0
-  sta $d02f
-
-  rts
+  jmp .execDmaList
   
 h1415toDmalist
     lda $14
@@ -83,10 +86,8 @@ fromMega65ToMemloc
 
     sta .dmalistSourceAddr
     sty .dmalistSourceAddr+1
-    
-    jsr knockVic4
-    
-    jmp .execAndClose
+        
+    jmp .execDmaList
 
 mega65DmaFetchPreWarm
     ;count high-byte and source/dest banks are directly defined in the .fetchlist part below
@@ -99,11 +100,8 @@ mega65DmaFetchPreWarm
     sta .dmalistDestAddr+1
 
     lda #0
-    sta dma_bank
     sta .dmalistDestBank
-  
-    lda #>.dmalist
-    sta dma_hb
+    sta .dmalistCount+1
     
     rts
     
@@ -133,16 +131,7 @@ mega65DmaFetchPreWarm
     lda #1
     sta .dmalistDestBank
 
-    jsr knockVic4
-
-    lda #0 
-    sta dma_bank
-    
-    lda #>.dmalist
-    sta dma_hb
-    
-    lda #<.dmalist
-    sta dma_lbx
+    jsr .execDmaList
         
     ; copy from ext ($8000 at bank 5) to ram ($0801 at bank 0)
     lda #0
@@ -160,8 +149,7 @@ mega65DmaFetchPreWarm
     lda $2d
     sta .dmalistDestAddr+1
         
-    lda #<.dmalist
-    sta dma_lbx
+    jsr .execDmaList
 
     ; copy from temp high ($0800 at bank 1) bank to ext ($8000 at bank 5)
     lda #0
@@ -180,7 +168,7 @@ mega65DmaFetchPreWarm
     lda #5
     sta .dmalistDestBank
 
-    jsr .execAndClose
+    jsr .execDmaList
     
     LDA $0803
     STA $39        ; CURLIN low

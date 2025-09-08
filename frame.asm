@@ -461,10 +461,6 @@ cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
 
-;!source "loadfromreu.asm"
-
-;!source "megadma.asm"
-
 !source "auction.asm"
 
 

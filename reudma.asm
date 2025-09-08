@@ -1,5 +1,7 @@
 *=$7e00
 
+!to "reudma.bin.prg",cbm
+
 ; tt:txttab. start of basic program text
 ; vt:vartab. start of variables = end of basic program text
 ; bl:basic length
