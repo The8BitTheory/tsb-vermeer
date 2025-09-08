@@ -109,6 +109,7 @@ mega65DmaFetchPreWarm
 ;  then the "previous" basic program from temporary space to high-ram
 ; this assumes we're only swapping between two basic programs. we'll see if that holds
 
+.basic_ram_addr = $0801
 .basic_ram_bank = $0
 .basic_temp_addr = $8000
 .basic_temp_bank = $1
@@ -116,19 +117,28 @@ mega65DmaFetchPreWarm
 .basic_high_bank = $5
 
 .swapBasic
+    ; write chain-byte to dmalist-command
+    lda #%00000100
+    sta .dmalist
+    
     ; copy from ram ($0800 at bank 0) to temp ($8000 at bank 1)
     sec
     lda $2d
     sbc $2b
     sta .dmalistCount
+    sta .dmalistCount+12
+    sta .dmalistCount+24
     
     lda $2e
     sbc $2c
     sta .dmalistCount+1
+    sta .dmalistCount+13
+    sta .dmalistCount+25
+    ; write count to 2nd and 3rd command as well
     
-    lda $2b
+    lda #<.basic_ram_addr
     sta .dmalistSourceAddr
-    lda $2c
+    lda #>.basic_ram_addr
     sta .dmalistSourceAddr+1
 
     lda #.basic_ram_bank
@@ -144,47 +154,10 @@ mega65DmaFetchPreWarm
     sta .dmalistDestBank
 
     jsr .execDmaList
-        
-    ; copy from high ($8000 at bank 5) to ram ($0801 at bank 0)
-    lda #<.basic_high_addr
-    sta .dmalistSourceAddr
     
-    lda #>.basic_high_addr
-    sta .dmalistSourceAddr+1
-    
-    lda #.basic_high_bank
-    sta .dmalistSourceBank
-    
-    lda $2b
-    sta .dmalistDestAddr
-    lda $2c
-    sta .dmalistDestAddr+1
-
-    lda #.basic_ram_bank
-    sta .dmalistDestBank
-    
-    jsr .execDmaList
-
-    ; copy from temp ($8000 at bank 1) to high ($8000 at bank 5)
-    lda #<.basic_temp_addr
-    sta .dmalistSourceAddr
-    
-    lda #>.basic_temp_addr
-    sta .dmalistSourceAddr+1
-    
-    lda #.basic_temp_bank
-    sta .dmalistSourceBank
-    
-    lda #<.basic_high_addr
-    sta .dmalistDestAddr
-    
-    lda #>.basic_high_addr
-    sta .dmalistDestAddr+1
-    
-    lda #.basic_high_bank
-    sta .dmalistDestBank
-
-    jsr .execDmaList
+    ; remove chain-byte from dmalist-command
+    lda #0
+    sta .dmalist
     
     LDA $0803
     STA $39        ; CURLIN low
@@ -218,3 +191,25 @@ parseAddressParameter
   !byte 0     ; command msb (always zero)
   !word 0     ; modulo. unused. always zero
 
+; copy from high to ram
+  !byte 4     ;copy + chain
+  !word 0     ;count - set in code
+  !word $8000 ;source address
+  !byte 5     ;source bank
+  !word $0801 ;dest address
+  !byte 0     ;dest bank
+  !byte 0
+  !word 0
+  
+; copy from temp to high
+  !byte 0     ;copy + chain
+  !word 0     ;count - set in code
+  !word $8000 ;dest address
+  !byte 1     ;dest bank
+  !word $8000 ;source address
+  !byte 5     ;source bank
+  !byte 0
+  !word 0
+  
+
+; copy from temp to high
