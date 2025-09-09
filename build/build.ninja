@@ -10,10 +10,10 @@ format = prg
 basedir = d$:\c64\ver2\ver2
 builddir = d$:\c64\ver2\ver2\build
 
-project = tsb-vermeer$ (Workspace)
+project = frame.bin
 config = d$:\c64\ver2\ver2\project-config.json
-target = d$:\c64\ver2\ver2\build\tsb-vermeer$ (Workspace).prg
-dbg_out = d$:\c64\ver2\ver2\build\tsb-vermeer$ (Workspace).report
+target = d$:\c64\ver2\ver2\build\frame.bin.prg
+dbg_out = d$:\c64\ver2\ver2\build\frame.bin.report
 python_exe = c$:\Users\martin\.vscode\extensions\rosc.vs64-2.6.2\resources\python\python.exe
 java_exe = java
 rc_exe = c$:\Users\martin\.vscode\extensions\rosc.vs64-2.6.2\tools\rc.py
