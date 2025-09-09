@@ -48,7 +48,7 @@ aucKey    !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
-    jsr memExpPreWarm
+    jsr .locMemexpPrewarm
 
     jsr chkcommaint
     stx fr
@@ -286,8 +286,10 @@ setup
     jsr parseAddressParameter
     lda $14
     sta memloc
+    sta memloc_park
     lda $15
     sta memloc+1
+    sta memloc_park+1
     
     ; read text-constants offset. used to be $7a00 in main ram, but now needs to be REU/M65 bank offset
     jsr parseAddressParameter
@@ -307,7 +309,7 @@ setup
         
 printConstant
     ; read constant index from parameter
-    jsr memExpPreWarm
+    jsr .locMemexpPrewarm
     
     jsr chkcommaint
     stx zeileanf
@@ -421,6 +423,13 @@ loadCoordinates
     ldy f2+1
     jmp memexp_toMemloc
     
+.locMemexpPrewarm
+    lda memloc_park
+    sta memloc
+    lda memloc_park+1
+    sta memloc+1
+    jmp memExpPreWarm
+    
 parseAddressParameter
     jsr chkcom
     jsr frmnum
@@ -433,7 +442,7 @@ fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
 fy        !byte 0     ; offset in frame-data (y offset in 256 byte window)
 f4        !word 0     ; current value of fc+offset
-
+memloc_park  !word 0
 memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 
 ; type of expanded memory
