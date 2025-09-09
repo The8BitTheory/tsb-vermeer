@@ -20,3 +20,5 @@ tsbneo.asm
 tsbneo.prg
 *.crt
 *.reu
+*.zip
+/build
