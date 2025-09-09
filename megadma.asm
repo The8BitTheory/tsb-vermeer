@@ -209,7 +209,7 @@ parseAddressParameter
   !word 0
   
 ; copy from temp to high
-  !byte 0     ;copy + chain
+  !byte 0     ;copy
   !word 0     ;count - set in code
   !word $8000 ;dest address
   !byte 1     ;dest bank
