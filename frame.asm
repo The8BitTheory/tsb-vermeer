@@ -43,6 +43,7 @@ baseY     !byte 0
 baseX     !byte 0
 baseW     !byte 0
 baseH     !byte 0
+aucKey    !byte 0
 
 
 frame

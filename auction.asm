@@ -12,10 +12,10 @@ readkeys
   sei             ; Interrupts sperren (IRQ-Routine abschalten, um Überschneidungen mit alter Tastaturabfrage zu vermeiden)
   
   lda #%00000100
-  sta $fc
+  sta val2
   
   lda #0
-  sta $fb
+  sta aucKey
   
   ldx #2
   
@@ -33,12 +33,12 @@ selectColumn
   
   bne .checkNext   ; nicht gedrückt. nächstes zeichen prüfen
   
-  lda $fc
-  ora $fb
-  sta $fb
+  lda val2
+  ora aucKey
+  sta aucKey
 
 .checkNext
-  lsr $fc  
+  lsr val2
   dex
   bpl selectColumn
 
@@ -47,6 +47,8 @@ selectColumn
 
   cli             ; Interrupts wieder zulassen
   rts             ; Rücksprung BASIC
+  
+val2 !byte 0
 
 ;          return 01  pfhoch 66  pflinks71
 cols !byte %11111110, %10111111, %01111111
