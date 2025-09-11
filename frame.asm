@@ -1,6 +1,6 @@
 ;6502 assembly
 
-*= $0400
+*= $c000
 
 !to "frame.bin.prg",cbm
 
@@ -38,6 +38,9 @@ memexp_toMemloc   = $7e00+3
     jmp printConstant
     jmp setup
     jmp readkeys        ;auction
+    jmp checkPlantation ;plantation
+
+!fill 15
 
 baseY     !byte 0
 baseX     !byte 0
@@ -466,6 +469,8 @@ tempIndex !word 0
 cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
+
+!source "plantation.asm"
 
 !source "auction.asm"
 
