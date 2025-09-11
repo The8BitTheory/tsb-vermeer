@@ -1,9 +1,10 @@
 ;6502 assembly
 
-*= $c000
+*= $7a00
 
 !to "frame.bin.prg",cbm
 
+memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 helpvec     = $b0
   
 zeileanf    = $C5DF
@@ -40,7 +41,7 @@ memexp_toMemloc   = $7e00+3
     jmp readkeys        ;auction
     jmp checkPlantation ;plantation
 
-!fill 15
+!fill 12
 
 baseY     !byte 0
 baseX     !byte 0
@@ -446,7 +447,7 @@ f2        !word 0     ; current value of fa+offset
 fy        !byte 0     ; offset in frame-data (y offset in 256 byte window)
 f4        !word 0     ; current value of fc+offset
 memloc_park  !word 0
-memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+
 
 ; type of expanded memory
 ; 1=reu

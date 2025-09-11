@@ -125,7 +125,7 @@ checkPlantation
 .checkRow
     lda .curRow
     bmi .toNextRowSkip         ; if negative, skip row check and go to next row
-    cmp #16                    ; if beyond bottom-border, we're done
+    cmp #17                    ; if beyond bottom-border, we're done
     bpl .plantCheckDone
 
     clc
@@ -136,7 +136,7 @@ checkPlantation
     ;check cols
     lda .curCol
     bmi .toNextCol          ; if negative, go to next col
-    cmp #37
+    cmp #23
     beq .toNextCol          ; if beyond border, go to next col
 
 .checkTile
@@ -182,13 +182,14 @@ checkPlantation
     cmp .lastRow
     bne .checkRow
 
+.plantCheckDone
 ; now, check for adjacent water. yes, productivity 110. no, productivity 100
     ldx #100
+    stx $3fe
 
-.plantCheckDone
 ; write size to .Y
     ldy .size
-
+    sty $3ff
     rts
 
 
