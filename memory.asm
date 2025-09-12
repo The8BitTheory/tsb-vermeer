@@ -37,12 +37,7 @@ execLocation  = $ca80    ; this is where ML routines go to in RAM
 ; this routine creates a dictionary entry
 ;  it requires an index, 2 bytes length and 2 bytes location in memory expansion
 .setup
-    jsr chkcommaint
-    ; multiply index by 4 to get offset
-    txa
-    asl
-    asl
-    sta .tempIndex
+    jsr .parseIndex
     
     ; length
     jsr .parseAddressParameter
@@ -67,20 +62,34 @@ execLocation  = $ca80    ; this is where ML routines go to in RAM
     rts
     
 .fetch
-    lda .exp_dictionary
+    jsr .parseIndex
+    tax
+    
+    lda .exp_dictionary,x
     sta .dma_params_len
-    lda .exp_dictionary+1
+    inx
+    lda .exp_dictionary,x
     sta .dma_params_len+1
+    inx
     
     ; expansion location
-    lda .exp_dictionary+2
+    lda .exp_dictionary,x
     sta .dma_params_exp
-    lda .exp_dictionary+3
+    inx
+    lda .exp_dictionary,x
     sta .dma_params_exp+1
 
     ; copy from reu to memory
     jmp .mlDmaFetch
-    
+
+.parseIndex
+    jsr chkcommaint
+    ; multiply index by 4 to get offset
+    txa
+    asl
+    asl
+    sta .tempIndex
+    rts
     
 .parseAddressParameter
     jsr chkcom
