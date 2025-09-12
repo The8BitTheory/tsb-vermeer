@@ -1,12 +1,20 @@
-;*=$06b0
-HIBASE            = $288  ; location of screen-ram high-byte
-chkcommaint = $e200
+*=$ca80
+
+HIBASE            = $0288  ; location of screen-ram high-byte
+chkcommaint       = $e200
 
 !zone plantation
 
 .plantLoc         = $fb   ;location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
 
+    jmp checkPlantation
+    ;jmp drawPlantation
+    
+!fill 6
+
+productivity  !byte 0
+size          !byte 0
 
 ; compares plantation area with greenfield. params: location in screen-ram
 ;  params: x-coordinate (column), y-coordinate (row). both zero-based
@@ -73,9 +81,8 @@ checkPlantation
     beq +  
     
     ; if building isn't on solid ground, skip the rest
-    ldy #0
-
-    rts
+    stx .size
+    jmp .plantCheckDone
 
 ; calculate size. available area is 23x17
 ; - boundary on 4 sides (not going beyond borders of available area)
@@ -186,24 +193,17 @@ checkPlantation
 .plantCheckDone
 ; now, check for adjacent water. yes, productivity 110. no, productivity 100
     ldx #100
-    stx $3fe
+    stx productivity
 
 ; write size to .Y
     ldy .size
-    sty $3ff
+    sty size
     rts
 
 
 ; - water and rocks (value not 96)
 ; - other plantations (value not 96)
   
-  
-.done
-  rts
-
-.checkPlantationRow
-
-  rts
 
 .checkIsGrassTile
   lda (.plantLoc),y
@@ -221,7 +221,6 @@ checkPlantation
 .plantCol         !byte 0
 .plantRow         !byte 0
 .plantStart       !word 0
-.plantEnd         !word 0
 .plantData        !byte 0,0,0,0,0,0
 .size             !byte 0
 

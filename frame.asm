@@ -1,6 +1,6 @@
 ;6502 assembly
 
-*= $7a00
+*= $0400
 
 !to "frame.bin.prg",cbm
 
@@ -38,17 +38,15 @@ memexp_toMemloc   = $7e00+3
     jmp frame
     jmp printConstant
     jmp setup
-    jmp readkeys        ;auction
-    jmp checkPlantation ;plantation
+    ;jmp readkeys        ;auction
+    ;jmp checkPlantation ;plantation
 
-!fill 12
+!fill 18
 
 baseY     !byte 0
 baseX     !byte 0
 baseW     !byte 0
 baseH     !byte 0
-aucKey    !byte 0
-
 
 frame
 ; calculate absolute address of frame index offsets
@@ -471,8 +469,8 @@ cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
 
-!source "plantation.asm"
+;!source "plantation.asm"
 
-!source "auction.asm"
+;!source "auction.asm"
 
 

@@ -57,13 +57,49 @@ REU_SWAP___F        = $ce           ;Speicherbereich tauschen
 REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 
-memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
 
 !zone load_from_reu
 
     jmp reuPreWarm
     jmp fromReuToMemloc
-    ;jmp swapWithReu    ;enable this when more jmp statements are added
+    jmp swapWithReu    
+    jmp dmaCopy
+    ;jmp .mlDmaCopy     ;enable this when more jmp statements are added
+    
+; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
+;dma_ml_loc = $ca2a
+;$ca2a .dma_params_len   !byte 0,0
+;$ca2c .dma_params_c64   !byte <execLocation,>execLocation
+;$ca2e .dma_params_exp   !byte 0,0
+; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
+;.mlDmaCopy
+  
+  lda dma_ml_loc
+  sta REUBYTES
+  lda dma_ml_loc+1
+  sta REUBYTES+1
+  
+  lda dma_ml_loc+2
+  sta REUC64RAM
+  lda dma_ml_loc+3
+  sta REUC64RAM+1
+  
+  lda dma_ml_loc+4
+  sta REURAM
+  lda dma_ml_loc+5
+  sta REURAM+1
+  
+  lda #0
+  sta REUBANK
+  
+  lda #REU_FETCH____
+  sta REUCOMMAND
+  
+      
+dmaCopy
+    rts
 
 ; routine that swaps basic program between main memory and higher bank
 swapWithReu

@@ -1,6 +1,11 @@
-;*=$c000
+*=$ca80
 
 !zone auction
+  
+  jmp readkeys
+  
+aucKey    !byte 0
+
 readkeys
   ; pfeil-links (pa7, pb1)
   ; pfeil-hoch (pa6, pb6)

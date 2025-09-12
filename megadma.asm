@@ -5,29 +5,57 @@
 
 !zone mega65dma
 
-key_register = $d02f
+memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+key_register  = $d02f
+dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
 
-dma_format= $d703
-dma_bank  = $d702 ;bank and flags
-dma_hb    = $d701 ;high byte of address
-dma_lbx   = $d700 ;low byte of address and execute
+dma_format    = $d703
+dma_bank      = $d702 ;bank and flags
+dma_hb        = $d701 ;high byte of address
+dma_lbx       = $d700 ;low byte of address and execute
 
-chkcom    = $aefd
-frmnum    = $ad8a
-getadr    = $b7f7
+chkcom        = $aefd
+frmnum        = $ad8a
+getadr        = $b7f7
 
-memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
-chkcommaint = $e200
+chkcommaint   = $e200
 
-;NOPs are added to keep compatibility with JMP instructions of other CPUs
-  bra mega65DmaFetchPreWarm
-!byte $ea ;nop
-  bra fromMega65ToMemloc
-!byte $ea ;nop
-  bra .swapBasic
-!byte $ea ;nop
-  bra dmaCopy
+  jmp mega65DmaFetchPreWarm
+  jmp fromMega65ToMemloc
+  jmp .swapBasic
+  jmp dmaCopy
+  jmp .mlDmaCopy
+
+; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
+;dma_ml_loc = $ca2a
+;$ca2a .dma_params_len   !byte 0,0
+;$ca2c .dma_params_c64   !byte <execLocation,>execLocation
+;$ca2e .dma_params_exp   !byte 0,0
+; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
+.mlDmaCopy
+  lda #0
+  sta .dmalist
+  sta .dmalistDestBank
   
+  lda dma_ml_loc
+  sta .dmalistCount
+  lda dma_ml_loc+1
+  sta .dmalistCount+1
+  
+  lda dma_ml_loc+2
+  sta .dmalistDestAddr
+  lda dma_ml_loc+3
+  sta .dmalistDestAddr+1
+  
+  lda dma_ml_loc+4
+  sta .dmalistSourceAddr
+  lda dma_ml_loc+5
+  sta .dmalistSourceAddr+1
+  
+  lda #5
+  sta .dmalistSourceBank
+  
+  ;rts
 
 .execDmaList
 ;knockVic4
@@ -76,7 +104,7 @@ dmaCopy
   
 h1415toDmalist
     phx
-    bsr parseAddressParameter
+    bsr .parseAddressParameter
     plx
     lda $14
     sta .dmalist,x
@@ -178,7 +206,7 @@ mega65DmaFetchPreWarm
     ; 4) In BASIC-Interpreter einsteigen
     JMP $A7AE     
 
-parseAddressParameter
+.parseAddressParameter
     jsr chkcom
     jsr frmnum
     jmp getadr
