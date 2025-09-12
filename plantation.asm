@@ -119,6 +119,11 @@ checkPlantation
     sbc #2
     sta .curCol
 
+    clc
+    lda .buildingCol
+    adc #4
+    sta .lastCol
+
   ; check first line of plantation. can be outside of available area, in theory
   ;  first line starts 2 screen rows above and 2 cols left of building
 
@@ -127,11 +132,6 @@ checkPlantation
     bmi .toNextRowSkip         ; if negative, skip row check and go to next row
     cmp #17                    ; if beyond bottom-border, we're done
     bpl .plantCheckDone
-
-    clc
-    lda .buildingCol
-    adc #4
-    sta .lastCol
 
     ;check cols
     lda .curCol
@@ -173,6 +173,7 @@ checkPlantation
     lda #0
     sta .plantCol
 
+    clc
     tya
     adc #35
     tay
@@ -228,6 +229,5 @@ checkPlantation
 ;.leftScreenOffset !byte 2
 ;.topScreenOffset  !byte 6
 
-.bits6 !byte %10000000, %01000000, %00100000, %00010000, %00001000, %00000100
-.bits2 !byte %00000010, %00000001
+.bits6 !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
 
