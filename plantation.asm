@@ -9,9 +9,6 @@ chkcommaint       = $e200
                           ;contains the plantation's top-left tile later (can be building, can be less)
 
     jmp checkPlantation
-    ;jmp drawPlantation
-    
-!fill 6
 
 productivity  !byte 0
 size          !byte 0

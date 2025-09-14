@@ -6,6 +6,7 @@
 ; location in RAM is supposed to be the same for all of them
 ; execution of the routines has to be done in basic via SYS
 *=$ca00
+!to "memory.bin.prg",cbm
 
 !zone memory
 
@@ -17,6 +18,7 @@ chkcommaint     = $e200
 .mlDmaFetch     = $7e0c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
 
 execLocation    = $ca80    ; this is where ML routines go to in RAM
+parseAddressParameter = $063a ;lives in frame.asm
 
     jmp .fetch
     jmp .setup
@@ -29,10 +31,10 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
 ; length and locations of routines in expanded memory
 ; setup is writing to this
 ; 3 entries so far
-; - 0=plantation
+; - 0=sprites
 ; - 1=auction
-; - 2=sprites
-.exp_dictionary   !fill 12
+; - 2=plantation
+.exp_dictionary   !fill 8
 
 
 ; this routine creates a dictionary entry
@@ -41,7 +43,7 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
     jsr .parseIndex
     
     ; length
-    jsr .parseAddressParameter
+    jsr parseAddressParameter
     lda $14
     ldx .tempIndex
     sta .exp_dictionary,x
@@ -52,7 +54,7 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
     stx .tempIndex
     
     ; location
-    jsr .parseAddressParameter
+    jsr parseAddressParameter
     lda $14
     ldx .tempIndex
     sta .exp_dictionary,x
@@ -99,10 +101,10 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
     sta .tempIndex
     rts
     
-.parseAddressParameter
-    jsr chkcom
-    jsr frmnum
-    jmp getadr
+;.parseAddressParameter
+;    jsr chkcom
+;    jsr frmnum
+;    jmp getadr
     
 .tempIndex    !byte 0
     

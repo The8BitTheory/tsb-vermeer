@@ -1,4 +1,5 @@
 *=$ca80
+!to "sprites.bin.prg",cbm
 
 !zone spriteFetch
 
