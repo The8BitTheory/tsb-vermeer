@@ -7,17 +7,16 @@
 ; execution of the routines has to be done in basic via SYS
 *=$ca00
 
-
 !zone memory
 
-chkcom        = $aefd
-frmnum        = $ad8a
-getadr        = $b7f7
-chkcommaint   = $e200
+chkcom          = $aefd
+frmnum          = $ad8a
+getadr          = $b7f7
+chkcommaint     = $e200
 
-.mlDmaFetch   = $7e0c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
+.mlDmaFetch     = $7e0c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
 
-execLocation  = $ca80    ; this is where ML routines go to in RAM
+execLocation    = $ca80    ; this is where ML routines go to in RAM
 
     jmp .fetch
     jmp .setup
@@ -28,6 +27,7 @@ execLocation  = $ca80    ; this is where ML routines go to in RAM
 .dma_params_exp   !byte 0,0
 
 ; length and locations of routines in expanded memory
+; setup is writing to this
 ; 2 entries so far
 ; - 0=plantation
 ; - 1=auction
