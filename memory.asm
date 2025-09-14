@@ -28,9 +28,10 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
 
 ; length and locations of routines in expanded memory
 ; setup is writing to this
-; 2 entries so far
+; 3 entries so far
 ; - 0=plantation
 ; - 1=auction
+; - 2=sprites
 .exp_dictionary   !fill 12
 
 
@@ -78,6 +79,11 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
     inx
     lda .exp_dictionary,x
     sta .dma_params_exp+1
+
+    lda #<execLocation
+    sta .dma_params_c64
+    lda #>execLocation
+    sta .dma_params_c64+1
 
     ; copy from reu to memory
     jmp .mlDmaFetch

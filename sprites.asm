@@ -9,6 +9,10 @@ chrgot          = $79
 spriteLoc       = $c000
 chkcommaint     = $e200
 
+.dma_params_len = $ca06
+.dma_params_c64 = $ca08
+.dma_params_exp = $ca0a
+
 .mlDmaFetch     = $7e0c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
 
     jmp .fetchSprites
@@ -16,9 +20,9 @@ chkcommaint     = $e200
 
     ; 2 count, 2 c64-address (lb,hb), 2 ext-address (lb,hb)
     ; bank-information is contained in memexp-specific code
-.dma_params_len   !byte 0,0
-.dma_params_c64   !byte <spriteLoc,>spriteLoc
-.dma_params_exp   !byte 0,0
+;.dma_params_len   !byte 0,0
+;.dma_params_c64   !byte <spriteLoc,>spriteLoc
+;.dma_params_exp   !byte 0,0
 
 .exp_sprites      !word 0
 
@@ -49,7 +53,6 @@ chkcommaint     = $e200
     ; multiply index by 2 to get source offset from .exp_sprites
     txa
     asl
-    ;tax
 
     ; reu address is always .exp_sprites plus offset (index * 2)
     ; offset is in accumulator
