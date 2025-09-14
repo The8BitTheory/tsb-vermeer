@@ -8,6 +8,7 @@
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 key_register  = $d02f
 dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
+parseAddressParameter = $063a
 
 dma_format    = $d703
 dma_bank      = $d702 ;bank and flags
@@ -104,7 +105,7 @@ dmaCopy
   
 h1415toDmalist
     phx
-    bsr .parseAddressParameter
+    jsr .parseAddressParameter
     plx
     lda $14
     sta .dmalist,x
