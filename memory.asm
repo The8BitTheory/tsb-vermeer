@@ -86,7 +86,9 @@ execLocation    = $ca80    ; this is where ML routines go to in RAM
     sta .dma_params_c64+1
 
     ; copy from reu to memory
-    jmp .mlDmaFetch
+    jsr .mlDmaFetch
+
+    jmp execLocation
 
 .parseIndex
     jsr chkcommaint
