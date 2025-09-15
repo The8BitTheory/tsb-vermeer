@@ -25,15 +25,15 @@ chkcommaint   = $e200
   jmp fromMega65ToMemloc
   jmp .swapBasic
   jmp dmaCopy
-  jmp .mlDmaCopy
+  ;jmp .mlDmaCopy
 
 ; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
 ;dma_ml_loc = $ca2a
 ;$ca2a .dma_params_len   !byte 0,0
 ;$ca2c .dma_params_c64   !byte <execLocation,>execLocation
 ;$ca2e .dma_params_exp   !byte 0,0
-; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
-.mlDmaCopy
+; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca06 (memory.asm .dma_params_*)
+;.mlDmaCopy
   lda #0
   sta .dmalist
   sta .dmalistDestBank
@@ -105,7 +105,7 @@ dmaCopy
   
 h1415toDmalist
     phx
-    jsr .parseAddressParameter
+    jsr parseAddressParameter
     plx
     lda $14
     sta .dmalist,x
@@ -196,21 +196,21 @@ mega65DmaFetchPreWarm
     lda #0
     sta .dmalist
     
-    LDA $0803
-    STA $39        ; CURLIN low
-    LDA $0804
-    STA $3A        ; CURLIN high
+    lda $0803
+    sta $39        ; CURLIN low
+    lda $0804
+    sta $3A        ; CURLIN high
 
     ; TXTPTR <- Adresse erstes Token (bei $0801 ist das $0801+4 = $0805)
     jsr $a68e
     
     ; 4) In BASIC-Interpreter einsteigen
-    JMP $A7AE     
+    jmp $A7AE     
 
-.parseAddressParameter
-    jsr chkcom
-    jsr frmnum
-    jmp getadr
+;.parseAddressParameter
+;    jsr chkcom
+;    jsr frmnum
+;    jmp getadr
   
 .dmalist
   !byte 0     ; command lsb (0=copy, 3=fill)

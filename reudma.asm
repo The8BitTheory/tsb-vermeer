@@ -68,11 +68,11 @@ dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on
     jmp dmaCopy
     ;jmp .mlDmaCopy     ;enable this when more jmp statements are added
     
-; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
-;dma_ml_loc = $ca2a
-;$ca2a .dma_params_len   !byte 0,0
-;$ca2c .dma_params_c64   !byte <execLocation,>execLocation
-;$ca2e .dma_params_exp   !byte 0,0
+; 2 count, 2 c64-address (lb,hb), 2 ext-address (lb,hb)
+;dma_ml_loc = $ca06 in memory.asm
+;$ca06 .dma_params_len   !byte 0,0
+;$ca06 .dma_params_c64   !byte <execLocation,>execLocation
+;$ca06 .dma_params_exp   !byte 0,0
 ; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
 ;.mlDmaCopy
   
@@ -99,6 +99,7 @@ dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on
   
       
 dmaCopy
+    ;not implemented here (yet?), because it's done via TSB's memsave command right now
     rts
 
 ; routine that swaps basic program between main memory and higher bank
@@ -132,16 +133,16 @@ swapWithReu
     sta REUCOMMAND
     
     ; CURLIN <- Zeilennummer aus $0803/$0804 (erste Zeile bei $0801)
-    LDA $0803
-    STA $39        ; CURLIN low
-    LDA $0804
-    STA $3A        ; CURLIN high
+    lda $0803
+    sta $39        ; CURLIN low
+    lda $0804
+    sta $3A        ; CURLIN high
 
     ; TXTPTR <- Adresse erstes Token (bei $0801 ist das $0801+4 = $0805)
     jsr $a68e
     
     ; 4) In BASIC-Interpreter einsteigen
-    JMP $A7AE       
+    jmp $A7AE       
 
 
  ; .A=LB, .X=HB for Length
