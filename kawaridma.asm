@@ -40,18 +40,19 @@ dma_params_exp = $ca0a
 ; count high-byte is always zero
 ; destination is always memloc
 .kawariDmaFetchPreWarm
-; this is not doing anything right now
-;  need to check whether closing the extended registers clears their values
+    ; closing registers and then opening them again brings back the previously stored values.
+    
+    jsr .knockKawariOpen
 
-;    lda #0
-;    sta VIDEO_MEM_2_IDX
+    lda #0
+    sta VIDEO_MEM_2_IDX
     
-;    lda memloc
-;    sta VIDEO_MEM_1_LO
-;    lda memloc+1
-;    sta VIDEO_MEM_1_HI
+    lda memloc
+    sta VIDEO_MEM_1_LO
+    lda memloc+1
+    sta VIDEO_MEM_1_HI
     
-    rts
+    jmp .closeKawari
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
@@ -63,20 +64,8 @@ dma_params_exp = $ca0a
     sty VIDEO_MEM_1_HI
     stx VIDEO_MEM_1_IDX
 
-; prewarm start 
-    lda #0
-    sta VIDEO_MEM_2_IDX
-    
-    lda memloc
-    sta VIDEO_MEM_1_LO
-    lda memloc+1
-    sta VIDEO_MEM_1_HI
-; prewarm end
-
-    lda #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-    sta VIDEO_MEM_1_VAL   ; write executes dma operation
-    
-    jmp .execDma
+    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+    jmp .execDmaAndCloseKawari
 
 ;swaps the currently running basic program with the one stored in expanded memory
 ; as the kawari doesn't have SWAP capability and insufficient space to use a swap-area we'll have to
@@ -103,11 +92,9 @@ dma_params_exp = $ca0a
     ; VIDEO_MEM_1 = read-port
     ; VIDEO_MEM_2 = write-port
     lda #0
-    sta dma_params_exp
     sta VIDEO_MEM_1_LO
     sta VIDEO_MEM_2_LO
     lda #80
-    sta dma_params_exp+1
     sta VIDEO_MEM_1_HI
     sta VIDEO_MEM_2_HI
     
@@ -135,9 +122,7 @@ dma_params_exp = $ca0a
     jmp -
     
 .backToBasic
-    ; close Kawari registers (good practice?)
-    lda #%10000000
-    sta VIDEO_MEM_FLAGS
+    jsr .closeKawari
 
     lda $0803
     sta $39        ; CURLIN low
@@ -177,17 +162,19 @@ dma_params_exp = $ca0a
     lda $15
     sta VIDEO_MEM_1_HI
 
-    lda #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-    sta VIDEO_MEM_1_VAL   ; write executes dma operation
-
-.execDma
+    ldx #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+    
+.execDmaAndCloseKawari
     lda #15               ; Port 1 op DMA, Port 2 op DMA
     lda VIDEO_MEM_FLAGS
+    
+    stx VIDEO_MEM_1_VAL   ; write executes dma operation
 
 .polldone
     lda VIDEO_MEM_2_IDX   ; wait for done
     bne .polldone
-    
+
+.closeKawari
     ; close Kawari registers (good practice?)
     lda #%10000000
     sta VIDEO_MEM_FLAGS
@@ -200,6 +187,8 @@ dma_params_exp = $ca0a
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .mlDmaCopy
+    jsr .knockKawariOpen
+    
     lda dma_params_len
     sta VIDEO_MEM_1_IDX
     lda dma_params_len+1
@@ -217,10 +206,9 @@ dma_params_exp = $ca0a
     lda dma_params_c64+1
     sta VIDEO_MEM_1_HI
 
-    lda #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-    sta VIDEO_MEM_1_VAL   ; write executes dma operation
+    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
-    jmp .execDma
+    jmp .execDmaAndCloseKawari
     
     
 .knockKawariOpen
