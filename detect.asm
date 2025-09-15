@@ -3,10 +3,11 @@
 REUSTATUS           = $df00         ;Statusregister (nur lesen, wird dann gelöscht!)
 REUCOMMAND          = $df01         ;Befehlsregister
 
+KAWARIREG           = $d03f
 
 jmp checkForREU
 jmp checkForMega65
-;jmp dmaCopy
+jmp checkForKawari
 
 
 ;*******************************************************************************
@@ -63,4 +64,23 @@ checkForMega65
   sty $d02f
   rts
   
-;!source "megadma.asm"
+checkForKawari
+  lda #86 ; 'V'
+  sta KAWARIREG
+  lda #73 ; 'I'
+  sta KAWARIREG
+  lda #67 ; 'C'
+  sta KAWARIREG
+  lda #50 ; '2'
+  sta KAWARIREG
+  
+  ldy #$ff
+  lda $d03b
+  bne .exit
+  
+  lda #%10000000
+  sta KAWARIREG
+  
+  ldy #0
+  rts
+

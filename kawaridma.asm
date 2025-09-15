@@ -1,4 +1,5 @@
 *=$7e00
+!to "kawaridma.bin.prg",cbm
 
 ; the VIC-II Kawari has a single 64kB memory bank
 ; data-transfer can be done in various ways, here we'll use DMA
@@ -60,8 +61,8 @@ dma_params_exp = $ca0a
     pha
     jsr .knockKawariOpen
     pla
-    sta VIDEO_MEM_1_LO
-    sty VIDEO_MEM_1_HI
+    sta VIDEO_MEM_2_LO
+    sty VIDEO_MEM_2_HI
     stx VIDEO_MEM_1_IDX
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
@@ -166,7 +167,7 @@ dma_params_exp = $ca0a
     
 .execDmaAndCloseKawari
     lda #15               ; Port 1 op DMA, Port 2 op DMA
-    lda VIDEO_MEM_FLAGS
+    sta VIDEO_MEM_FLAGS
     
     stx VIDEO_MEM_1_VAL   ; write executes dma operation
 
