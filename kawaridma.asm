@@ -22,8 +22,12 @@ VIDEO_MEM_2_VAL   = $d03e
 
 VIDEO_MEM_FLAGS   = $d03f
 
+chkcom      = $aefd
+frmnum      = $ad8a
+getadr      = $b7f7
+
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.    
-parseAddressParameter = $063a
+;parseAddressParameter = $063a
 dma_params_len = $ca06
 dma_params_c64 = $ca08
 dma_params_exp = $ca0a
@@ -42,7 +46,7 @@ dma_params_exp = $ca0a
 ; destination is always memloc
 .kawariDmaFetchPreWarm
     ; closing registers and then opening them again brings back the previously stored values.
-    
+    rts
     jsr .knockKawariOpen
 
     lda #0
@@ -57,6 +61,8 @@ dma_params_exp = $ca0a
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
+    ; video_mem_1 is destination address
+    ; video_mem_2 is source address
 .fromKawariToMemloc
     pha
     jsr .knockKawariOpen
@@ -64,6 +70,15 @@ dma_params_exp = $ca0a
     sta VIDEO_MEM_2_LO
     sty VIDEO_MEM_2_HI
     stx VIDEO_MEM_1_IDX
+
+    lda #0
+    sta VIDEO_MEM_2_IDX
+    
+    lda memloc
+    sta VIDEO_MEM_1_LO
+    lda memloc+1
+    sta VIDEO_MEM_1_HI
+
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
     jmp .execDmaAndCloseKawari
@@ -222,5 +237,11 @@ dma_params_exp = $ca0a
     lda #50 ; '2'
     sta VIDEO_MEM_FLAGS
     rts
+    
+parseAddressParameter
+    jsr chkcom
+    jsr frmnum
+    jmp getadr
+    
     
     
