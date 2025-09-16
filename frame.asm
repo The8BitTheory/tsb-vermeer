@@ -439,11 +439,11 @@ parseAddressParameter
         
 
 
-tc        !word $7a00 ; address where the binary text constants are stored. todo: parse from SYS or POKE
+tc        !word $7a00 ; address where the binary text constants are stored
 fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
 fy        !byte 0     ; offset in frame-data (y offset in 256 byte window)
-f4        !word 0     ; current value of fc+offset
+f4        !word 0     ; current value of tc+offset
 memloc_park  !word 0
 
 

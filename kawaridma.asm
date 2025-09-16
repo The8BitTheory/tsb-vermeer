@@ -37,8 +37,9 @@ dma_params_exp = $ca0a
     jmp .kawariDmaFetchPreWarm
     jmp .fromKawariToMemloc
     jmp .swapBasic
-    jmp .dmaCopy
+    jmp .dmaStash
     jmp .mlDmaCopy
+    jmp .dmaFetch
 
 ;sets the registers that are used by memloc operations constantly multiple times
 
@@ -151,13 +152,8 @@ dma_params_exp = $ca0a
     ; 4) In BASIC-Interpreter einsteigen
     jmp $A7AE     
     
-; generic stash command. used for copying ressource files to higher banks upon loading
-; length, dram, vram
-    ; video_mem_1 is destination address
-    ; video_mem_2 is source address
-.dmaCopy
-    jsr .knockKawariOpen
     
+.parseLenSourceDest
     jsr parseAddressParameter
     lda $14
     sta VIDEO_MEM_1_IDX
@@ -178,6 +174,14 @@ dma_params_exp = $ca0a
     lda $15
     sta VIDEO_MEM_1_HI
 
+    rts
+; generic stash command. used for copying ressource files to higher banks upon loading
+; length, dram, vram
+    ; video_mem_1 is destination address
+    ; video_mem_2 is source address
+.dmaStash
+    jsr .parseLenSourceDest
+
     ldx #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
     
 .execDmaAndCloseKawari
@@ -191,6 +195,13 @@ dma_params_exp = $ca0a
     bne .polldone
 
     rts
+    
+.dmaFetch
+    jsr .parseLenSourceDest
+    
+    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+
+    jmp kawaridma.execDmaAndCloseKawari
 
 .closeKawari
     ; close Kawari registers (good practice?)
