@@ -59,14 +59,16 @@ REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
+parseAddressParameter = $063a
 
 !zone load_from_reu
 
     jmp reuPreWarm
     jmp fromReuToMemloc
     jmp swapWithReu    
-    jmp dmaCopy
-    ;jmp .mlDmaCopy     ;enable this when more jmp statements are added
+    jmp .dmaStash
+    jmp .mlDmaFetch     ;enable this when more jmp statements are added
+    jmp .dmaFetch
     
 ; 2 count, 2 c64-address (lb,hb), 2 ext-address (lb,hb)
 ;dma_ml_loc = $ca06 in memory.asm
@@ -74,32 +76,82 @@ dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on
 ;$ca06 .dma_params_c64   !byte <execLocation,>execLocation
 ;$ca06 .dma_params_exp   !byte 0,0
 ; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
-;.mlDmaCopy
+.mlDmaFetch
   
-  lda dma_ml_loc
-  sta REUBYTES
-  lda dma_ml_loc+1
-  sta REUBYTES+1
+    lda dma_ml_loc
+    sta REUBYTES
+    lda dma_ml_loc+1
+    sta REUBYTES+1
   
-  lda dma_ml_loc+2
-  sta REUC64RAM
-  lda dma_ml_loc+3
-  sta REUC64RAM+1
+    lda dma_ml_loc+2
+    sta REUC64RAM
+    lda dma_ml_loc+3
+    sta REUC64RAM+1
   
-  lda dma_ml_loc+4
-  sta REURAM
-  lda dma_ml_loc+5
-  sta REURAM+1
+    lda dma_ml_loc+4
+    sta REURAM
+    lda dma_ml_loc+5
+    sta REURAM+1
   
-  lda #0
-  sta REUBANK
+    lda #0
+    sta REUBANK
   
-  lda #REU_FETCH____
-  sta REUCOMMAND
+    lda #REU_FETCH____
+    sta REUCOMMAND
+    
+    rts
   
-      
-dmaCopy
-    ;not implemented here (yet?), because it's done via TSB's memsave command right now
+ 
+.parseLengthParameter
+    jsr parseAddressParameter
+    lda $14
+    sta REUBYTES
+    lda $15
+    sta REUBYTES+1
+    rts
+
+.parseC64RAMParameter
+    jsr parseAddressParameter
+    lda $14
+    sta REUC64RAM
+    lda $15
+    sta REUC64RAM+1
+    rts
+
+.parseREURAMParameter
+    jsr parseAddressParameter
+    lda $14
+    sta REURAM
+    lda $15
+    sta REURAM+1    
+    rts
+    
+; read parameters from basic and do DMA stash to REU (length, source, dest)
+.dmaStash
+    jsr .parseLengthParameter
+    jsr .parseC64RAMParameter
+    jsr .parseREURAMParameter
+    
+    lda #0
+    sta REUBANK
+    
+    lda #REU_STASH____
+    sta REUCOMMAND
+    
+    rts
+
+; read parameters from basic and do DMA feetch from REU (length, source, dest)
+.dmaFetch
+    jsr .parseLengthParameter
+    jsr .parseREURAMParameter
+    jsr .parseC64RAMParameter
+    
+    lda #0
+    sta REUBANK
+    
+    lda #REU_FETCH____
+    sta REUCOMMAND
+    
     rts
 
 ; routine that swaps basic program between main memory and higher bank
