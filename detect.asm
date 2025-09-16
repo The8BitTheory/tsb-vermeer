@@ -78,8 +78,8 @@ checkForKawari
   lda $d03b
   bne .exit
   
-  lda #%10000000
-  sta KAWARIREG
+;  lda #%10000000
+;  sta KAWARIREG
   
   ldy #0
   rts

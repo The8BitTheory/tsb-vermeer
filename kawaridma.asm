@@ -64,9 +64,9 @@ dma_params_exp = $ca0a
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .fromKawariToMemloc
-    pha
-    jsr .knockKawariOpen
-    pla
+;    pha
+;    jsr .knockKawariOpen
+;    pla
     sta VIDEO_MEM_2_LO
     sty VIDEO_MEM_2_HI
     stx VIDEO_MEM_1_IDX
@@ -138,7 +138,7 @@ dma_params_exp = $ca0a
     jmp -
     
 .backToBasic
-    jsr .closeKawari
+    ;jsr .closeKawari
 
     lda $0803
     sta $39        ; CURLIN low
@@ -190,6 +190,8 @@ dma_params_exp = $ca0a
     lda VIDEO_MEM_2_IDX   ; wait for done
     bne .polldone
 
+    rts
+
 .closeKawari
     ; close Kawari registers (good practice?)
     lda #%10000000
@@ -228,6 +230,7 @@ dma_params_exp = $ca0a
     
     
 .knockKawariOpen
+    rts
     lda #86 ; 'V'
     sta VIDEO_MEM_FLAGS
     lda #73 ; 'I'
