@@ -24,8 +24,9 @@ chkcommaint   = $e200
   jmp mega65DmaFetchPreWarm
   jmp fromMega65ToMemloc
   jmp .swapBasic
-  jmp dmaCopy
-  ;jmp .mlDmaCopy
+  jmp .dmaStash
+  jmp .mlDmaCopy
+  jmp .dmaFetch
 
 ; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
 ;dma_ml_loc = $ca2a
@@ -33,7 +34,7 @@ chkcommaint   = $e200
 ;$ca2c .dma_params_c64   !byte <execLocation,>execLocation
 ;$ca2e .dma_params_exp   !byte 0,0
 ; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca06 (memory.asm .dma_params_*)
-;.mlDmaCopy
+.mlDmaCopy
   lda #0
   sta .dmalist
   sta .dmalistDestBank
@@ -82,23 +83,39 @@ chkcommaint   = $e200
   sta key_register
   rts
   
-; generic stash/fetch command. used for copying ressource files to higher banks upon loading
-dmaCopy
-  ; parse parameters (count, source, dest)
-  
+.parseLenSourceDest
   ldx #1  ;dmalistcount
   bsr h1415toDmalist
 
   ldx #3  ;dmalistSourceAddr
   bsr h1415toDmalist
-  
-  jsr chkcommaint
-  stx .dmalistSourceBank
-  
+    
   ldx #6  ;dmalistDestAddr
   bsr h1415toDmalist
   
-  jsr chkcommaint
+  rts
+  
+; generic stash command. used for copying ressource files to higher banks upon loading
+.dmaStash
+  ; parse parameters (count, source, dest)
+  
+  bsr .parseLenSourceDest
+  
+  ldx #0
+  stx .dmalistSourceBank
+  ldx #5
+  stx .dmalistDestBank
+
+  bra .execDmaList
+  
+.dmaFetch
+  ; parse parameters (count, source, dest)
+  
+  bsr .parseLenSourceDest
+  
+  ldx #5
+  stx .dmalistSourceBank  
+  ldx #0
   stx .dmalistDestBank
 
   bra .execDmaList
