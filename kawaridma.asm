@@ -47,7 +47,7 @@ dma_params_exp = $ca0a
 ; destination is always memloc
 .kawariDmaFetchPreWarm
     ; closing registers and then opening them again brings back the previously stored values.
-    rts
+    ;rts
     ;jsr .knockKawariOpen
 
     lda #0
@@ -58,6 +58,7 @@ dma_params_exp = $ca0a
     lda memloc+1
     sta VIDEO_MEM_1_HI
     
+    rts
     ;jmp .closeKawari
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
@@ -72,17 +73,17 @@ dma_params_exp = $ca0a
     sty VIDEO_MEM_2_HI
     stx VIDEO_MEM_1_IDX
 
-    lda #0
-    sta VIDEO_MEM_2_IDX
+    ;lda #0
+    ;sta VIDEO_MEM_2_IDX
     
-    lda memloc
-    sta VIDEO_MEM_1_LO
-    lda memloc+1
-    sta VIDEO_MEM_1_HI
+    ;lda memloc
+    ;sta VIDEO_MEM_1_LO
+    ;lda memloc+1
+    ;sta VIDEO_MEM_1_HI
 
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-    jmp .execDmaAndCloseKawari
+    jmp .execDma;AndCloseKawari
 
 ;swaps the currently running basic program with the one stored in expanded memory
 ; as the kawari doesn't have SWAP capability and insufficient space to use a swap-area we'll have to
@@ -184,7 +185,7 @@ dma_params_exp = $ca0a
 
     ldx #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
     
-.execDmaAndCloseKawari
+.execDma;AndCloseKawari
     lda #15               ; Port 1 op DMA, Port 2 op DMA
     sta VIDEO_MEM_FLAGS
     
@@ -201,7 +202,7 @@ dma_params_exp = $ca0a
     
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
-    jmp kawaridma.execDmaAndCloseKawari
+    jmp .execDma;AndCloseKawari
 
 ;.closeKawari
     ; close Kawari registers (good practice?)
@@ -236,7 +237,7 @@ dma_params_exp = $ca0a
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
-    jmp .execDmaAndCloseKawari
+    jmp .execDma;AndCloseKawari
     
     
 ;.knockKawariOpen
