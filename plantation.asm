@@ -5,7 +5,7 @@ chkcommaint       = $e200
 
 !zone plantation
 
-.plantLoc         = $fb   ;location of the plantation's building (ie +2/+2 from top-most left point)
+.plantLoc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
 
     jmp checkPlantation
@@ -55,7 +55,7 @@ checkPlantation
   ; check if building is on solid ground (no water, no rocks)
 +   ldx #0        ; x contains number of valid ground tiles (4 means, position is ok)
     ldy #0
-    sty .size
+    sty size
   
   ; tile top-left
     jsr .checkIsGrassTile
@@ -78,7 +78,7 @@ checkPlantation
     beq +  
     
     ; if building isn't on solid ground, skip the rest
-    stx .size
+    stx size
     jmp .plantCheckDone
 
 ; calculate size. available area is 23x17
@@ -147,7 +147,7 @@ checkPlantation
     lda (.plantLoc),y
     cmp #96
     bne .toNextCol
-    inc .size
+    inc size
     ldx .plantRow
     lda .plantData,x
     ldx .plantCol
@@ -193,21 +193,18 @@ checkPlantation
     stx productivity
 
 ; write size to .Y
-    ldy .size
-    sty size
+    ldy size
     rts
 
 
 ; - water and rocks (value not 96)
 ; - other plantations (value not 96)
-  
-
 .checkIsGrassTile
-  lda (.plantLoc),y
-  cmp #96
-  bne +
-  inx
-+ rts
+    lda (.plantLoc),y
+    cmp #96
+    bne +
+    inx
++   rts
 
 .buildingCol      !byte 0
 .buildingRow      !byte 0
@@ -219,7 +216,6 @@ checkPlantation
 .plantRow         !byte 0
 .plantStart       !word 0
 .plantData        !byte 0,0,0,0,0,0
-.size             !byte 0
 
 
 ;.leftScreenOffset !byte 2

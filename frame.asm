@@ -450,6 +450,7 @@ memloc_park  !word 0
 ; type of expanded memory
 ; 1=reu
 ; 2=mega65
+; 3=kawari
 memtype   !byte 0
 
 
