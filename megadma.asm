@@ -1,4 +1,4 @@
-*=$7e00
+*=$7ec0
 
 !cpu m65
 !to "megadma.bin.prg",cbm
@@ -8,7 +8,7 @@
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 key_register  = $d02f
 dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
-parseAddressParameter = $063a
+parseAddressParameter = $7e06
 
 dma_format    = $d703
 dma_bank      = $d702 ;bank and flags

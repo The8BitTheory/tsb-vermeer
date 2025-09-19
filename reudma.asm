@@ -1,4 +1,4 @@
-*=$7e00
+*=$7ec0
 
 !to "reudma.bin.prg",cbm
 
@@ -57,17 +57,25 @@ REU_SWAP___F        = $ce           ;Speicherbereich tauschen
 REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 
+memory_loc = $7e00
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
-dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
-parseAddressParameter = $063a
+dma_ml_loc    = memory_loc+$f ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
+parseAddressParameter = $7e06
 
 !zone load_from_reu
 
+; used by frame.asm
     jmp reuPreWarm
     jmp fromReuToMemloc
+    
+; used to load different basic program
     jmp swapWithReu    
+
+; used as basic stash command
     jmp .dmaStash
-    jmp .mlDmaFetch     ;enable this when more jmp statements are added
+; used by memory.asm to fetch ML routines to $ca00
+    jmp .mlDmaFetch
+; used as basic fetch command
     jmp .dmaFetch
     
 ; 2 count, 2 c64-address (lb,hb), 2 ext-address (lb,hb)
@@ -76,6 +84,7 @@ parseAddressParameter = $063a
 ;$ca06 .dma_params_c64   !byte <execLocation,>execLocation
 ;$ca06 .dma_params_exp   !byte 0,0
 ; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
+; this is used by memory.asm to pull in ML-routines before execution
 .mlDmaFetch
   
     lda dma_ml_loc

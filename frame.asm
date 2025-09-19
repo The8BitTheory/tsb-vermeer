@@ -4,8 +4,9 @@
 
 !to "frame.bin.prg",cbm
 
-memloc    = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+
 helpvec     = $b0
+memloc      = $fb
   
 zeileanf    = $C5DF
 spalteanf   = $C5E0
@@ -25,14 +26,14 @@ use3        = $a3bd
 chkcommaint = $e200
 bsout       = $ffd2
 
-chkcom      = $aefd
-frmnum      = $ad8a
-getadr      = $b7f7
+memexp_loc = $7ec0
+memory_loc = $7e00
+parseAddressParameter = memory_loc+$6   ; in memory.asm
+locMemexpPrewarm  = memory_loc+$9       ; in memory.asm, because restores memloc from memloc_park and then calls memexp specific warmup
+memexp_toMemloc   = memexp_loc+$3       ; in memexp specific routine (reu, mega, kawari, etc)
 
-
-memExpPreWarm    = $7e00
-memexp_toMemloc   = $7e00+3
 ;memexp_swapBasic  = $7f00+6
+
 
 
     jmp frame
@@ -50,7 +51,7 @@ baseH     !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
-    jsr .locMemexpPrewarm
+    jsr locMemexpPrewarm
 
     jsr chkcommaint
     stx fr
@@ -278,20 +279,11 @@ vus
     
     jmp checkNext
     
-; this reads 3 addresses (tc,fa,memloc) from parameters and stores them here for future use
+; this reads addresses (tc,fa) from parameters and stores them here for future use
 setup
     ; read memory type
-    jsr chkcommaint
-    stx memtype
-    
-    ; read memloc. $c64d pretty much
-    jsr parseAddressParameter
-    lda $14
-    sta memloc
-    sta memloc_park
-    lda $15
-    sta memloc+1
-    sta memloc_park+1
+    ;jsr chkcommaint
+    ;stx memtype
     
     ; read text-constants offset. used to be $7a00 in main ram, but now needs to be REU/M65 bank offset
     jsr parseAddressParameter
@@ -311,7 +303,7 @@ setup
         
 printConstant
     ; read constant index from parameter
-    jsr .locMemexpPrewarm
+    jsr locMemexpPrewarm
     
     jsr chkcommaint
     stx zeileanf
@@ -425,17 +417,8 @@ loadCoordinates
     ldy f2+1
     jmp memexp_toMemloc
     
-.locMemexpPrewarm
-    lda memloc_park
-    sta memloc
-    lda memloc_park+1
-    sta memloc+1
-    jmp memExpPreWarm
     
-parseAddressParameter
-    jsr chkcom
-    jsr frmnum
-    jmp getadr
+
         
 
 
@@ -444,14 +427,12 @@ fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
 fy        !byte 0     ; offset in frame-data (y offset in 256 byte window)
 f4        !word 0     ; current value of tc+offset
-memloc_park  !word 0
-
 
 ; type of expanded memory
 ; 1=reu
 ; 2=mega65
 ; 3=kawari
-memtype   !byte 0
+;memtype   !byte 0
 
 
 fb = 6 ; foreground border

@@ -1,4 +1,4 @@
-*=$ca80
+*=$ca00
 
 HIBASE            = $0288  ; location of screen-ram high-byte
 chkcommaint       = $e200

@@ -1,4 +1,5 @@
-*=$7e00
+*=$7ec0
+
 !to "kawaridma.bin.prg",cbm
 
 ; the VIC-II Kawari has a single 64kB memory bank
@@ -22,15 +23,16 @@ VIDEO_MEM_2_VAL   = $d03e
 
 VIDEO_MEM_FLAGS   = $d03f
 
-chkcom      = $aefd
-frmnum      = $ad8a
-getadr      = $b7f7
+parseAddressParameter = $7e06
+;chkcom      = $aefd
+;frmnum      = $ad8a
+;getadr      = $b7f7
 
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.    
-;parseAddressParameter = $063a
-dma_params_len = $ca06
-dma_params_c64 = $ca08
-dma_params_exp = $ca0a
+memory_loc      = $7e00
+dma_params_len = memory_loc+$f
+dma_params_c64 = memory_loc+$11
+dma_params_exp = memory_loc+$13
 
 !zone kawaridma
 
@@ -47,8 +49,7 @@ dma_params_exp = $ca0a
 ; destination is always memloc
 .kawariDmaFetchPreWarm
     ; closing registers and then opening them again brings back the previously stored values.
-    ;rts
-    ;jsr .knockKawariOpen
+    jsr .knockKawariOpen
 
     lda #0
     sta VIDEO_MEM_2_IDX
@@ -59,16 +60,16 @@ dma_params_exp = $ca0a
     sta VIDEO_MEM_1_HI
     
     rts
-    ;jmp .closeKawari
+    jmp .closeKawari
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .fromKawariToMemloc
-;    pha
-;    jsr .knockKawariOpen
-;    pla
+    pha
+    jsr .knockKawariOpen
+    pla
     sta VIDEO_MEM_2_LO
     sty VIDEO_MEM_2_HI
     stx VIDEO_MEM_1_IDX
@@ -83,7 +84,7 @@ dma_params_exp = $ca0a
 
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-    jmp .execDma;AndCloseKawari
+    jmp .execDmaAndCloseKawari
 
 ;swaps the currently running basic program with the one stored in expanded memory
 ; as the kawari doesn't have SWAP capability and insufficient space to use a swap-area we'll have to
@@ -105,7 +106,7 @@ dma_params_exp = $ca0a
     lda $2c
     sta $fc
     
-    ;jsr .knockKawariOpen
+    jsr .knockKawariOpen
     
     ; VIDEO_MEM_1 = read-port
     ; VIDEO_MEM_2 = write-port
@@ -140,7 +141,7 @@ dma_params_exp = $ca0a
     jmp -
     
 .backToBasic
-    ;jsr .closeKawari
+    jsr .closeKawari
 
     lda $0803
     sta $39        ; CURLIN low
@@ -185,7 +186,7 @@ dma_params_exp = $ca0a
 
     ldx #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
     
-.execDma;AndCloseKawari
+.execDmaAndCloseKawari
     lda #15               ; Port 1 op DMA, Port 2 op DMA
     sta VIDEO_MEM_FLAGS
     
@@ -202,21 +203,21 @@ dma_params_exp = $ca0a
     
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
-    jmp .execDma;AndCloseKawari
+    jmp .execDmaAndCloseKawari
 
-;.closeKawari
+.closeKawari
     ; close Kawari registers (good practice?)
-;    lda #%10000000
-;    sta VIDEO_MEM_FLAGS
-;    rts
+    lda #%10000000
+    sta VIDEO_MEM_FLAGS
+    rts
 
 ; this always copies from a location in kawari-vram to the dram location taken from $ca06 (memory.asm .dma_params_*)
-;  currently used to copy ML-routines (by memory.asm/fetch) to $ca80 and sprites (by sprites.asm/fetchSprites) to $c000
+;  currently used to copy ML-routines (by memory.asm/fetch) to $ca00 and sprites (by sprites.asm/fetchSprites) to $c000
 ;  which are both inside the VIC-II's memory area, fortunately.
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .mlDmaCopy
-    ;jsr .knockKawariOpen
+    jsr .knockKawariOpen
     
     lda dma_params_len
     sta VIDEO_MEM_1_IDX
@@ -237,24 +238,19 @@ dma_params_exp = $ca0a
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
-    jmp .execDma;AndCloseKawari
+    jmp .execDmaAndCloseKawari
     
     
-;.knockKawariOpen
-;    lda #86 ; 'V'
-;    sta VIDEO_MEM_FLAGS
-;    lda #73 ; 'I'
-;    sta VIDEO_MEM_FLAGS
-;    lda #67 ; 'C'
-;    sta VIDEO_MEM_FLAGS
-;    lda #50 ; '2'
-;    sta VIDEO_MEM_FLAGS
-;    rts
-    
-parseAddressParameter
-    jsr chkcom
-    jsr frmnum
-    jmp getadr
+.knockKawariOpen
+    lda #86 ; 'V'
+    sta VIDEO_MEM_FLAGS
+    lda #73 ; 'I'
+    sta VIDEO_MEM_FLAGS
+    lda #67 ; 'C'
+    sta VIDEO_MEM_FLAGS
+    lda #50 ; '2'
+    sta VIDEO_MEM_FLAGS
+    rts
     
     
     

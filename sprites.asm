@@ -1,20 +1,18 @@
-*=$ca80
+*=$ca00
 !to "sprites.bin.prg",cbm
 
 !zone spriteFetch
 
-chkcom          = $aefd
-frmnum          = $ad8a
-getadr          = $b7f7
 chrgot          = $79
-spriteLoc       = $c000
 chkcommaint     = $e200
 
-.dma_params_len = $ca06
-.dma_params_c64 = $ca08
-.dma_params_exp = $ca0a
+memory_loc      = $7e00
+.dma_params_len = memory_loc+$f
+.dma_params_c64 = memory_loc+$11
+.dma_params_exp = memory_loc+$13
 
-.mlDmaFetch     = $7e0c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
+.mlDmaFetch     = memory_loc+$c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
+parseAddressParameter = memory_loc+6
 
     jmp .fetchSprites
     jmp .setupSpriteLocation
@@ -28,7 +26,7 @@ chkcommaint     = $e200
 .exp_sprites      !word 0
 
 .setupSpriteLocation
-    jsr .parseAddressParameter
+    jsr parseAddressParameter
     lda $14
     sta .exp_sprites
     lda $15
@@ -82,7 +80,3 @@ chkcommaint     = $e200
 ; we're done
 +   rts
 
-.parseAddressParameter
-    jsr chkcom
-    jsr frmnum
-    jmp getadr
