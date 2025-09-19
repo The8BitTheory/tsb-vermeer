@@ -49,34 +49,36 @@ dma_params_exp          = memory_loc+$13
 ; count high-byte is always zero
 ; destination is always memloc
 .kawariDmaFetchPreWarm
-    ; closing registers and then opening them again brings back the previously stored values.
-;    jsr .knockKawariOpen
-
-    lda #0
-    sta VIDEO_MEM_2_IDX
-    
-    lda memloc
-    sta VIDEO_MEM_1_LO
-    lda memloc+1
-    sta VIDEO_MEM_1_HI
-    
-;    jmp .closeKawari
     rts
+    ; closing registers and then opening them again brings back the previously stored values.
+.fromKawariToMemloc
+    lda #0
+    sta dma_params_len+1
+    
+    lda #$4d
+    sta memloc
+    lda #$c6
+    sta memloc+1
+;    lda memloc
+;    sta VIDEO_MEM_1_LO
+;    lda memloc+1
+;    sta VIDEO_MEM_1_HI
+    
+;    rts
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
-.fromKawariToMemloc
-;    pha
-;    jsr .knockKawariOpen
-;    pla
-    sta VIDEO_MEM_2_LO
-    sty VIDEO_MEM_2_HI
-    stx VIDEO_MEM_1_IDX
+;fromKawariToMemloc
+    sta VIDEO_MEM_1_LO
+    sty VIDEO_MEM_1_HI
+    stx dma_params_len
+    
+    jmp .kawariFetch
 
-    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-    jmp .execDmaAndCloseKawari
+;    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+;    jmp .execDmaAndCloseKawari
 
 ;swaps the currently running basic program with the one stored in expanded memory
 ; as the kawari doesn't have SWAP capability and insufficient space to use a swap-area we'll have to
@@ -98,7 +100,6 @@ dma_params_exp          = memory_loc+$13
     lda $2c
     sta $fc
     
-;    jsr .knockKawariOpen
     
     ; VIDEO_MEM_1 = read-port
     ; VIDEO_MEM_2 = write-port
@@ -133,7 +134,6 @@ dma_params_exp          = memory_loc+$13
     jmp -
     
 .backToBasic
-;    jsr .closeKawari
 
     lda $0803
     sta $39        ; CURLIN low
@@ -209,18 +209,6 @@ dma_params_exp          = memory_loc+$13
 .stashDone
     rts
 
-.execDmaAndCloseKawari
-    lda #15               ; Port 1 op DMA, Port 2 op DMA
-    sta VIDEO_MEM_FLAGS
-    
-    stx VIDEO_MEM_1_VAL   ; write executes dma operation
-
-.polldone
-    lda VIDEO_MEM_2_IDX   ; wait for done
-    bne .polldone
-
-
-    rts
     
 .dmaFetch
     jsr .parseLenParam
@@ -231,6 +219,7 @@ dma_params_exp          = memory_loc+$13
 ; destination
     jsr .parseAddressIntoMemloc
 
+.kawariFetch
     lda #%00000101               ; Auto increment port 1 and port 2
     sta VIDEO_MEM_FLAGS
     
@@ -260,40 +249,29 @@ dma_params_exp          = memory_loc+$13
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .mlDmaCopy
-;    jsr .knockKawariOpen
     
-    lda dma_params_len
-    sta VIDEO_MEM_1_IDX
-    lda dma_params_len+1
-    sta VIDEO_MEM_2_IDX
+    ;lda dma_params_len
+    ;sta VIDEO_MEM_1_IDX
+    ;lda dma_params_len+1
+    ;sta VIDEO_MEM_2_IDX
 
 ; source
     lda dma_params_exp
-    sta VIDEO_MEM_2_LO
+    sta VIDEO_MEM_1_LO
     lda dma_params_exp+1
-    sta VIDEO_MEM_2_HI
+    sta VIDEO_MEM_1_HI
 
 ; destination
     lda dma_params_c64
-    sta VIDEO_MEM_1_LO
+    sta memloc
     lda dma_params_c64+1
-    sta VIDEO_MEM_1_HI
+    sta memloc+1
+    
+    jmp .kawariFetch
 
-    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+;    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
-    jmp .execDmaAndCloseKawari
-    
-    
-;.knockKawariOpen
-;    lda #86 ; 'V'
-;    sta VIDEO_MEM_FLAGS
-;    lda #73 ; 'I'
-;    sta VIDEO_MEM_FLAGS
-;    lda #67 ; 'C'
-;    sta VIDEO_MEM_FLAGS
-;    lda #50 ; '2'
-;    sta VIDEO_MEM_FLAGS
-;    rts
-    
+;    jmp .execDmaAndCloseKawari
+
     
     
