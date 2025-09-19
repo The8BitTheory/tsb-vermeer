@@ -23,16 +23,17 @@ VIDEO_MEM_2_VAL   = $d03e
 
 VIDEO_MEM_FLAGS   = $d03f
 
-parseAddressParameter = $7e06
+
 ;chkcom      = $aefd
 ;frmnum      = $ad8a
 ;getadr      = $b7f7
 
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.    
-memory_loc      = $7e00
-dma_params_len = memory_loc+$f
-dma_params_c64 = memory_loc+$11
-dma_params_exp = memory_loc+$13
+memory_loc              = $7e00
+parseAddressParameter   = memory_loc+$6
+dma_params_len          = memory_loc+$f
+dma_params_c64          = memory_loc+$11
+dma_params_exp          = memory_loc+$13
 
 !zone kawaridma
 
@@ -204,10 +205,6 @@ dma_params_exp = memory_loc+$13
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
     jmp .execDmaAndCloseKawari
-
-
-;  064d 0000 0110 0100 1101
-;  c64d 1100 0110 0100 1101
 
 ; this always copies from a location in kawari-vram to the dram location taken from $ca06 (memory.asm .dma_params_*)
 ;  currently used to copy ML-routines (by memory.asm/fetch) to $ca00 and sprites (by sprites.asm/fetchSprites) to $c000

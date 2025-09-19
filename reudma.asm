@@ -27,7 +27,7 @@ REUBANK             = $df06         ;Bank in der REU
 REUBYTES            = $df07         ;Anzahl der betroffenen BYTES (LSB/MSB)
 REUIRQMASK          = $df09         ;Interruptmaske
 REUADRCONTROL       = $df0a         ;Adress-Kontroll-Register
- 
+
 ;*******************************************************************************
 ;*** REU-Befehle
 ;*******************************************************************************
@@ -60,7 +60,7 @@ REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 memory_loc = $7e00
 memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 dma_ml_loc    = memory_loc+$f ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
-parseAddressParameter = $7e06
+parseAddressParameter = memory_loc+$6
 
 !zone load_from_reu
 
