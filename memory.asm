@@ -5,23 +5,30 @@
 ; each entry has 2 bytes length and 2 bytes location in the memory expansion
 ; location in RAM is supposed to be the same for all of them
 ; execution of the routines has to be done in basic via SYS
-*=$ca00
+*=$7e00
 !to "memory.bin.prg",cbm
 
 !zone memory
+
+memexp_loc = $7ec0
 
 chkcom          = $aefd
 frmnum          = $ad8a
 getadr          = $b7f7
 chkcommaint     = $e200
 
-.mlDmaFetch     = $7e0c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
+.mlDmaFetch     = memexp_loc+$c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
 
-execLocation    = $ca80    ; this is where ML routines go to in RAM
-parseAddressParameter = $063a ;lives in frame.asm
+execLocation    = $ca00    ; this is where ML routines go to in RAM
+memloc          = $fb;  !word $c64d ;temporary 256 byte working area for dma.
+memExpPreWarm   = $7ec0
 
-    jmp .fetch
-    jmp .setup
+
+    jmp fetch
+    jmp addRoutineToDict
+    jmp parseAddressParameter
+    jmp locMemExpPreWarm
+    jmp setup
     
 ; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
 .dma_params_len   !byte 0,0
@@ -36,10 +43,20 @@ parseAddressParameter = $063a ;lives in frame.asm
 ; - 2=plantation
 .exp_dictionary   !fill 8
 
+setup
+    ; read memloc. $c64d pretty much
+    ;jsr parseAddressParameter
+    ;lda $14
+    lda #$4d
+    sta .memloc_park
+    ;lda $15
+    lda #$c6
+    sta .memloc_park+1
+    rts
 
 ; this routine creates a dictionary entry
 ;  it requires an index, 2 bytes length and 2 bytes location in memory expansion
-.setup
+addRoutineToDict
     jsr .parseIndex
     
     ; length
@@ -64,7 +81,7 @@ parseAddressParameter = $063a ;lives in frame.asm
     
     rts
     
-.fetch
+fetch
     jsr .parseIndex
     tax
     
@@ -101,10 +118,18 @@ parseAddressParameter = $063a ;lives in frame.asm
     sta .tempIndex
     rts
     
-;.parseAddressParameter
-;    jsr chkcom
-;    jsr frmnum
-;    jmp getadr
+parseAddressParameter
+    jsr chkcom
+    jsr frmnum
+    jmp getadr
+    
+locMemExpPreWarm
+    lda .memloc_park
+    sta memloc
+    lda .memloc_park+1
+    sta memloc+1
+    jmp memExpPreWarm
+
     
 .tempIndex    !byte 0
-    
+.memloc_park  !word $c64d
