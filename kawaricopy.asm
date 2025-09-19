@@ -1,6 +1,6 @@
 *=$7ec0
 
-!to "kawaridma.bin.prg",cbm
+!to "kawaricopy.bin.prg",cbm
 
 ; the VIC-II Kawari has a single 64kB memory bank
 ; data-transfer can be done in various ways, here we'll use DMA
@@ -49,10 +49,9 @@ dma_params_exp          = memory_loc+$13
 ; count high-byte is always zero
 ; destination is always memloc
 .kawariDmaFetchPreWarm
-    rts
     ; closing registers and then opening them again brings back the previously stored values.
 ;    jsr .knockKawariOpen
-.fromKawariToMemloc
+
     lda #0
     sta VIDEO_MEM_2_IDX
     
@@ -62,13 +61,13 @@ dma_params_exp          = memory_loc+$13
     sta VIDEO_MEM_1_HI
     
 ;    jmp .closeKawari
-    ;rts
+    rts
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
-;.fromKawariToMemloc
+.fromKawariToMemloc
 ;    pha
 ;    jsr .knockKawariOpen
 ;    pla
@@ -95,9 +94,9 @@ dma_params_exp          = memory_loc+$13
     
     ; store dram-read-address in $fb/$fc
     lda $2b
-    sta memloc
+    sta $fb
     lda $2c
-    sta memloc+1
+    sta $fc
     
 ;    jsr .knockKawariOpen
     
@@ -115,10 +114,10 @@ dma_params_exp          = memory_loc+$13
     
     ldy #0
     
--   lda (memloc),y                   ; read from dram
+-   lda ($fb),y                   ; read from dram
     pha                           ; put aside
     lda VIDEO_MEM_1_VAL           ; read from vram
-    sta (memloc),y                   ; write to dram
+    sta ($fb),y                   ; write to dram
     pla                           ; get from aside
     sta VIDEO_MEM_2_VAL           ; write to vram
     
@@ -147,22 +146,10 @@ dma_params_exp          = memory_loc+$13
     ; 4) In BASIC-Interpreter einsteigen
     jmp $A7AE     
     
-    
-.parseLenSourceDest
-    jsr parseAddressParameter
-    lda $14
-    sta VIDEO_MEM_1_IDX
-    lda $15
-    sta VIDEO_MEM_2_IDX
-    
-    ; source address
-    jsr parseAddressParameter
-    lda $14
-    sta VIDEO_MEM_2_LO
-    lda $15
-    sta VIDEO_MEM_2_HI
+
     
     ; destination address
+.parseMem1Address
     jsr parseAddressParameter
     lda $14
     sta VIDEO_MEM_1_LO
@@ -170,17 +157,58 @@ dma_params_exp          = memory_loc+$13
     sta VIDEO_MEM_1_HI
 
     rts
+    
+.parseAddressIntoMemloc
+    jsr parseAddressParameter
+    lda $14
+    sta memloc
+    lda $15
+    sta memloc+1
+
+    rts
+    
+.parseLenParam
+    ; length
+    jsr parseAddressParameter
+    lda $14
+    sta dma_params_len
+    lda $15
+    sta dma_params_len+1
+    rts
 ; generic stash command. used for copying ressource files to higher banks upon loading
 ; length, dram, vram
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .dmaStash
-;    jsr .knockKawariOpen
-    
-    jsr .parseLenSourceDest
+; length
+    jsr .parseLenParam
 
-    ldx #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+; source
+    jsr .parseAddressIntoMemloc
+    jsr .parseMem1Address
+
+    lda #%00000101               ; Auto increment port 1 and port 2
+    sta VIDEO_MEM_FLAGS
     
+    ldy #0
+    
+-   lda (memloc),y                   ; read from dram
+    sta VIDEO_MEM_1_VAL           ; read from vram
+    
+    ; decrease the overall count, so we know whether we're done
+    dec dma_params_len
+    bne +
+    dec dma_params_len+1
+    bmi .stashDone
+    
++   iny
+    bne -
+    inc memloc+1
+    jmp -
+
+.stashDone
+    rts
+
 .execDmaAndCloseKawari
     lda #15               ; Port 1 op DMA, Port 2 op DMA
     sta VIDEO_MEM_FLAGS
@@ -191,21 +219,40 @@ dma_params_exp          = memory_loc+$13
     lda VIDEO_MEM_2_IDX   ; wait for done
     bne .polldone
 
-;.closeKawari
+
     rts
-    ; close Kawari registers (good practice?)
-;    lda #%10000000
-;    sta VIDEO_MEM_FLAGS
-;    rts
     
 .dmaFetch
-;    jsr .knockKawariOpen
-    
-    jsr .parseLenSourceDest
-    
-    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
+    jsr .parseLenParam
 
-    jmp .execDmaAndCloseKawari
+; source
+    jsr .parseMem1Address
+    
+; destination
+    jsr .parseAddressIntoMemloc
+
+    lda #%00000101               ; Auto increment port 1 and port 2
+    sta VIDEO_MEM_FLAGS
+    
+    ldy #0
+    
+-   lda VIDEO_MEM_1_VAL     ; read from vram
+    sta (memloc),y                   
+    
+    ; decrease the overall count, so we know whether we're done
+    dec dma_params_len
+    bne +
+    dec dma_params_len+1
+    bmi .fetchDone
+    
++   iny
+    bne -
+    inc memloc+1
+    jmp -
+
+.fetchDone
+    rts
+
 
 ; this always copies from a location in kawari-vram to the dram location taken from $ca06 (memory.asm .dma_params_*)
 ;  currently used to copy ML-routines (by memory.asm/fetch) to $ca00 and sprites (by sprites.asm/fetchSprites) to $c000
