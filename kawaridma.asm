@@ -49,7 +49,7 @@ dma_params_exp = memory_loc+$13
 ; destination is always memloc
 .kawariDmaFetchPreWarm
     ; closing registers and then opening them again brings back the previously stored values.
-    jsr .knockKawariOpen
+;    jsr .knockKawariOpen
 
     lda #0
     sta VIDEO_MEM_2_IDX
@@ -59,29 +59,20 @@ dma_params_exp = memory_loc+$13
     lda memloc+1
     sta VIDEO_MEM_1_HI
     
+;    jmp .closeKawari
     rts
-    jmp .closeKawari
   
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .fromKawariToMemloc
-    pha
-    jsr .knockKawariOpen
-    pla
+;    pha
+;    jsr .knockKawariOpen
+;    pla
     sta VIDEO_MEM_2_LO
     sty VIDEO_MEM_2_HI
     stx VIDEO_MEM_1_IDX
-
-    ;lda #0
-    ;sta VIDEO_MEM_2_IDX
-    
-    ;lda memloc
-    ;sta VIDEO_MEM_1_LO
-    ;lda memloc+1
-    ;sta VIDEO_MEM_1_HI
-
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
     jmp .execDmaAndCloseKawari
@@ -106,7 +97,7 @@ dma_params_exp = memory_loc+$13
     lda $2c
     sta $fc
     
-    jsr .knockKawariOpen
+;    jsr .knockKawariOpen
     
     ; VIDEO_MEM_1 = read-port
     ; VIDEO_MEM_2 = write-port
@@ -141,7 +132,7 @@ dma_params_exp = memory_loc+$13
     jmp -
     
 .backToBasic
-    jsr .closeKawari
+;    jsr .closeKawari
 
     lda $0803
     sta $39        ; CURLIN low
@@ -182,6 +173,8 @@ dma_params_exp = memory_loc+$13
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .dmaStash
+;    jsr .knockKawariOpen
+    
     jsr .parseLenSourceDest
 
     ldx #8                ; Perform DMA op (8=dram to vram, 16=vram to dram)
@@ -196,20 +189,25 @@ dma_params_exp = memory_loc+$13
     lda VIDEO_MEM_2_IDX   ; wait for done
     bne .polldone
 
+;.closeKawari
     rts
+    ; close Kawari registers (good practice?)
+;    lda #%10000000
+;    sta VIDEO_MEM_FLAGS
+;    rts
     
 .dmaFetch
+;    jsr .knockKawariOpen
+    
     jsr .parseLenSourceDest
     
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
 
     jmp .execDmaAndCloseKawari
 
-.closeKawari
-    ; close Kawari registers (good practice?)
-    lda #%10000000
-    sta VIDEO_MEM_FLAGS
-    rts
+
+;  064d 0000 0110 0100 1101
+;  c64d 1100 0110 0100 1101
 
 ; this always copies from a location in kawari-vram to the dram location taken from $ca06 (memory.asm .dma_params_*)
 ;  currently used to copy ML-routines (by memory.asm/fetch) to $ca00 and sprites (by sprites.asm/fetchSprites) to $c000
@@ -217,7 +215,7 @@ dma_params_exp = memory_loc+$13
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 .mlDmaCopy
-    jsr .knockKawariOpen
+;    jsr .knockKawariOpen
     
     lda dma_params_len
     sta VIDEO_MEM_1_IDX
@@ -241,16 +239,16 @@ dma_params_exp = memory_loc+$13
     jmp .execDmaAndCloseKawari
     
     
-.knockKawariOpen
-    lda #86 ; 'V'
-    sta VIDEO_MEM_FLAGS
-    lda #73 ; 'I'
-    sta VIDEO_MEM_FLAGS
-    lda #67 ; 'C'
-    sta VIDEO_MEM_FLAGS
-    lda #50 ; '2'
-    sta VIDEO_MEM_FLAGS
-    rts
+;.knockKawariOpen
+;    lda #86 ; 'V'
+;    sta VIDEO_MEM_FLAGS
+;    lda #73 ; 'I'
+;    sta VIDEO_MEM_FLAGS
+;    lda #67 ; 'C'
+;    sta VIDEO_MEM_FLAGS
+;    lda #50 ; '2'
+;    sta VIDEO_MEM_FLAGS
+;    rts
     
     
     
