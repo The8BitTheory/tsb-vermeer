@@ -1,17 +1,25 @@
 *=$ca00
 
-HIBASE            = $0288  ; location of screen-ram high-byte
-chkcommaint       = $e200
+!to "plantation.bin.prg",cbm
+!source "mem.inc"
 
-!zone plantation
+HIBASE            = $0288  ; location of screen-ram high-byte
+
+
 
 .plantLoc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
+plantvector       = $c3f0 ;this points to the location in memexp that contains 2304 bytes of plantation data
+                          ;plantations of first town are at this address, each following town is at plus 256
+                          
+; START OF CODE
 
     jmp checkPlantation
 
 productivity  !byte 0
 size          !byte 0
+plantData     !byte 0,0,0,0,0,0
+
 
 ; compares plantation area with greenfield. params: location in screen-ram
 ;  params: x-coordinate (column), y-coordinate (row). both zero-based
@@ -19,6 +27,49 @@ size          !byte 0
 ;  size <4 means, invalid ground (building is not on 4 grass tiles)
 ;  also calculates the 4 bytes with area assignment
 checkPlantation
+
+
+    jsr chkcommaint
+    stx .buildingCol
+    jsr chkcommaint
+    stx .buildingRow
+    
+    ; load plantations of this town into memory
+    jsr memory_prewarm  ;set constant values in memory expansion (len-HB=0, dest-address=$c64d)
+            
+    ; parse town-id
+    jsr chkcommaint
+    txa    
+    adc #>plantvector  ; add 256 bytes to the address per town
+    tay
+    
+    lda #<plantvector   
+    ldx #255
+    ; fetch plantations of current town into memloc $c64d
+    jsr expmem_to_memloc
+        
+    ; iterate over plantations of this town
+    ldy #0
+    
+checkPlantationOwner
+    ;find available plantation slot
+    lda (.plantLoc),y
+    cmp #$ff
+    beq availablePlantationFound       ; if unoccupied (owner is $ff), use this
+    
+    ; jump to next plantation data
+    tya                   ; add 13 bytes to index (= location of next plantation data)
+    clc
+    adc #13
+    tay
+    bcc checkPlantationOwner ; if carry-bit is clear, we're inside the available plantation indices of this town. draw it.
+    
+    lda #0
+    sta size
+    jmp .plantCheckDone
+    
+
+availablePlantationFound
     lda #242            ;40*6 + 2 (row 6, column 2)
     sta .plantStart
     sta .plantLoc
@@ -26,10 +77,6 @@ checkPlantation
     sta .plantStart+1
     sta .plantLoc+1
 
-    jsr chkcommaint
-    stx .buildingCol
-    jsr chkcommaint
-    stx .buildingRow
     ldx .buildingRow  ;need this to set zero flag (or not)
 
   ; add building row to .plantStart to get .plantLoc
@@ -87,12 +134,12 @@ checkPlantation
 ;   - maximum ram location (bottom-right of available area)
     ; clear plantation data
 +   lda #0
-    sta .plantData
-    sta .plantData+1
-    sta .plantData+2
-    sta .plantData+3
-    sta .plantData+4
-    sta .plantData+5
+    sta plantData
+    sta plantData+1
+    sta plantData+2
+    sta plantData+3
+    sta plantData+4
+    sta plantData+5
     sta .plantRow
     sta .plantCol
 
@@ -149,11 +196,11 @@ checkPlantation
     bne .toNextCol
     inc size
     ldx .plantRow
-    lda .plantData,x
+    lda plantData,x
     ldx .plantCol
     ora .bits6,x
     ldx .plantRow
-    sta .plantData,x
+    sta plantData,x
 
 .toNextCol
     inc .plantCol
@@ -206,6 +253,7 @@ checkPlantation
     inx
 +   rts
 
+
 .buildingCol      !byte 0
 .buildingRow      !byte 0
 .curCol           !byte 0
@@ -215,11 +263,6 @@ checkPlantation
 .plantCol         !byte 0
 .plantRow         !byte 0
 .plantStart       !word 0
-.plantData        !byte 0,0,0,0,0,0
-
-
-;.leftScreenOffset !byte 2
-;.topScreenOffset  !byte 6
 
 .bits6 !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
 

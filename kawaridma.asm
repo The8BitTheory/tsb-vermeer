@@ -23,25 +23,14 @@ VIDEO_MEM_2_VAL   = $d03e
 
 VIDEO_MEM_FLAGS   = $d03f
 
+!source "mem.inc"
 
-;chkcom      = $aefd
-;frmnum      = $ad8a
-;getadr      = $b7f7
-
-memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.    
-memory_loc              = $7e00
-parseAddressParameter   = memory_loc+$6
-dma_params_len          = memory_loc+$f
-dma_params_c64          = memory_loc+$11
-dma_params_exp          = memory_loc+$13
-
-!zone kawaridma
 
     jmp .kawariDmaFetchPreWarm
     jmp .fromKawariToMemloc
     jmp .swapBasic
     jmp .dmaStash
-    jmp .mlDmaCopy
+    jmp .mlDmaFetch
     jmp .dmaFetch
 
 ;sets the registers that are used by memloc operations constantly multiple times
@@ -212,7 +201,7 @@ dma_params_exp          = memory_loc+$13
 ;  which are both inside the VIC-II's memory area, fortunately.
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
-.mlDmaCopy
+.mlDmaFetch
 ;    jsr .knockKawariOpen
     
     lda dma_params_len

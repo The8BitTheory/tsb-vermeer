@@ -57,12 +57,8 @@ REU_SWAP___F        = $ce           ;Speicherbereich tauschen
 REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 
-memory_loc = $7e00
-memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
-dma_ml_loc    = memory_loc+$f ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
-parseAddressParameter = memory_loc+$6
+!source "mem.inc"
 
-!zone load_from_reu
 
 ; used by frame.asm
     jmp reuPreWarm
@@ -87,19 +83,19 @@ parseAddressParameter = memory_loc+$6
 ; this is used by memory.asm to pull in ML-routines before execution
 .mlDmaFetch
   
-    lda dma_ml_loc
+    lda dma_params_len
     sta REUBYTES
-    lda dma_ml_loc+1
+    lda dma_params_len+1
     sta REUBYTES+1
   
-    lda dma_ml_loc+2
+    lda dma_params_c64
     sta REUC64RAM
-    lda dma_ml_loc+3
+    lda dma_params_c64+1
     sta REUC64RAM+1
   
-    lda dma_ml_loc+4
+    lda dma_params_exp
     sta REURAM
-    lda dma_ml_loc+5
+    lda dma_params_exp+1
     sta REURAM+1
   
     lda #0

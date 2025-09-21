@@ -6,7 +6,6 @@
 
 
 helpvec     = $b0
-memloc      = $fb
   
 zeileanf    = $C5DF
 spalteanf   = $C5E0
@@ -23,16 +22,9 @@ mkbox       = $a158
 use2        = $a35a
 use3        = $a3bd
 
-chkcommaint = $e200
 bsout       = $ffd2
 
-memexp_loc = $7ec0
-memory_loc = $7e00
-parseAddressParameter = memory_loc+$6   ; in memory.asm
-locMemexpPrewarm  = memory_loc+$9       ; in memory.asm, because restores memloc from memloc_park and then calls memexp specific warmup
-memexp_toMemloc   = memexp_loc+$3       ; in memexp specific routine (reu, mega, kawari, etc)
-
-;memexp_swapBasic  = $7f00+6
+!source "mem.inc"
 
 
 
@@ -51,7 +43,7 @@ baseH     !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
-    jsr locMemexpPrewarm
+    jsr memory_prewarm
 
     jsr chkcommaint
     stx fr
@@ -303,7 +295,7 @@ setup
         
 printConstant
     ; read constant index from parameter
-    jsr locMemexpPrewarm
+    jsr memory_prewarm
     
     jsr chkcommaint
     stx zeileanf
@@ -409,19 +401,15 @@ loadCoordinates
 .fromExpF4ToMemloc
     lda f4
     ldy f4+1
-    jmp memexp_toMemloc
+    jmp expmem_to_memloc
 
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
 .fromExpF2ToMemloc
     lda f2
     ldy f2+1
-    jmp memexp_toMemloc
+    jmp expmem_to_memloc
     
     
-
-        
-
-
 tc        !word $7a00 ; address where the binary text constants are stored
 fa        !word $0400 ; address where the binary frame data is stored.
 f2        !word 0     ; current value of fa+offset
@@ -450,9 +438,4 @@ tempIndex !word 0
 cfIndex   !byte 88,89,90,91,92,93,94
 
 border    !byte 124,123,108,106,32,116,112,119,111
-
-;!source "plantation.asm"
-
-;!source "auction.asm"
-
 

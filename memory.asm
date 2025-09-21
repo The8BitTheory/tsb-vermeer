@@ -8,25 +8,20 @@
 *=$7e00
 !to "memory.bin.prg",cbm
 
-!zone memory
-
-memexp_loc = $7ec0
+!source "mem.inc"
 
 chkcom          = $aefd
 frmnum          = $ad8a
 getadr          = $b7f7
-chkcommaint     = $e200
 
-.mlDmaFetch     = memexp_loc+$c  ; address where the memexp-specific dma-job is executed (reudma.asm, megadma.asm, etc)
 
+.expmem_prewarm  = expmem_loc
 execLocation    = $ca00    ; this is where ML routines go to in RAM
-memloc          = $fb;  !word $c64d ;temporary 256 byte working area for dma.
-memExpPreWarm   = $7ec0
 
 
     jmp fetch
     jmp addRoutineToDict
-    jmp parseAddressParameter
+    jmp .parseAddressParameter
     jmp locMemExpPreWarm
     jmp setup
     
@@ -105,7 +100,7 @@ fetch
     sta .dma_params_c64+1
 
     ; copy from reu to memory
-    jsr .mlDmaFetch
+    jsr expmem_dma_fetch
 
     jmp execLocation
 
@@ -118,7 +113,7 @@ fetch
     sta .tempIndex
     rts
     
-parseAddressParameter
+.parseAddressParameter
     jsr chkcom
     jsr frmnum
     jmp getadr
@@ -128,7 +123,7 @@ locMemExpPreWarm
     sta memloc
     lda .memloc_park+1
     sta memloc+1
-    jmp memExpPreWarm
+    jmp .expmem_prewarm
 
     
 .tempIndex    !byte 0

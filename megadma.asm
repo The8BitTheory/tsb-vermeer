@@ -3,55 +3,46 @@
 !cpu m65
 !to "megadma.bin.prg",cbm
 
-!zone mega65dma
+!source "mem.inc"
 
-memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.
 key_register  = $d02f
-dma_ml_loc    = $ca06 ; location of ML routine parameters that are DMA-copied on demand (plantations, auctions, ...)
-parseAddressParameter = $7e06
 
 dma_format    = $d703
 dma_bank      = $d702 ;bank and flags
 dma_hb        = $d701 ;high byte of address
 dma_lbx       = $d700 ;low byte of address and execute
 
-chkcom        = $aefd
-frmnum        = $ad8a
-getadr        = $b7f7
-
-chkcommaint   = $e200
-
   jmp mega65DmaFetchPreWarm
   jmp fromMega65ToMemloc
   jmp .swapBasic
   jmp .dmaStash
-  jmp .mlDmaCopy
+  jmp .mlDmaFetch
   jmp .dmaFetch
 
 ; 2 count, 3 c64-address (lb,hb), 3 ext-address (lb,hb)
-;dma_ml_loc = $ca2a
-;$ca2a .dma_params_len   !byte 0,0
-;$ca2c .dma_params_c64   !byte <execLocation,>execLocation
-;$ca2e .dma_params_exp   !byte 0,0
+;dma_ml_loc = $7e0f
+;$7e0f .dma_params_len   !byte 0,0
+;$7e11 .dma_params_c64   !byte <execLocation,>execLocation
+;$7e13 .dma_params_exp   !byte 0,0
 ; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca06 (memory.asm .dma_params_*)
-.mlDmaCopy
+.mlDmaFetch
   lda #0
   sta .dmalist
   sta .dmalistDestBank
   
-  lda dma_ml_loc
+  lda dma_params_len
   sta .dmalistCount
-  lda dma_ml_loc+1
+  lda dma_params_len+1
   sta .dmalistCount+1
   
-  lda dma_ml_loc+2
+  lda dma_params+2
   sta .dmalistDestAddr
-  lda dma_ml_loc+3
+  lda dma_params+3
   sta .dmalistDestAddr+1
   
-  lda dma_ml_loc+4
+  lda dma_params+4
   sta .dmalistSourceAddr
-  lda dma_ml_loc+5
+  lda dma_params+5
   sta .dmalistSourceAddr+1
   
   lda #5

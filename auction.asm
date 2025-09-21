@@ -1,6 +1,5 @@
 *=$ca00
-
-!zone auction
+!to "auction.bin.prg",cbm
   
   jmp readkeys
   
