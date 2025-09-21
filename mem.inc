@@ -1,9 +1,10 @@
 memory_loc = $7e00
-expmem_loc = $7e00+$c0
+expmem_loc = $7ec0
 
 memory_prewarm      = memory_loc+$9
 expmem_to_memloc    = expmem_loc+$3  ; .X=count, .A=mem LB, .Y=mem HB
 expmem_dma_fetch    = expmem_loc+$c
+
 
 
 

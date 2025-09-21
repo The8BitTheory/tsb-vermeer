@@ -19,7 +19,7 @@ getadr          = $b7f7
 execLocation    = $ca00    ; this is where ML routines go to in RAM
 
 
-    jmp fetch
+    jmp fetch       ;fetches ml-routine into $ca00 and executes it
     jmp addRoutineToDict
     jmp .parseAddressParameter
     jmp locMemExpPreWarm
@@ -36,16 +36,16 @@ execLocation    = $ca00    ; this is where ML routines go to in RAM
 ; - 0=sprites
 ; - 1=auction
 ; - 2=plantation
-.exp_dictionary   !fill 8
+.exp_dictionary   !fill 20
 
 setup
     ; read memloc. $c64d pretty much
-    ;jsr parseAddressParameter
-    ;lda $14
-    lda #$4d
+    jsr parseAddressParameter
+    lda $14
+    ;lda #$4d
     sta .memloc_park
-    ;lda $15
-    lda #$c6
+    lda $15
+    ;lda #$c6
     sta .memloc_park+1
     rts
 
@@ -127,4 +127,4 @@ locMemExpPreWarm
 
     
 .tempIndex    !byte 0
-.memloc_park  !word $c64d
+.memloc_park  !word 0;$c64d
