@@ -3,9 +3,9 @@
 !to "kawaricopy.bin.prg",cbm
 
 ; the VIC-II Kawari has a single 64kB memory bank
-; data-transfer can be done in various ways, here we'll use DMA
+; data-transfer can be done in various ways, here we'll use regular copying via CPU
 ; unlocking the additional registers is done through a knock sequence, like on the Mega65
-; DMA transfer is documented here: https://github.com/randyrossi/vicii-kawari/blob/main/doc/REGISTERS.md#dma-functions
+; VRAM/DRAM transfer is documented here: https://github.com/randyrossi/vicii-kawari/blob/main/doc/REGISTERS.md#accessing-video-memory
 ; 
 
 VIDEO_MEM_1_IDX   = $d035
@@ -23,19 +23,7 @@ VIDEO_MEM_2_VAL   = $d03e
 
 VIDEO_MEM_FLAGS   = $d03f
 
-
-;chkcom      = $aefd
-;frmnum      = $ad8a
-;getadr      = $b7f7
-
-memloc        = $fb;  !word $c64d ;temporary 256 byte working area for dma.    
-memory_loc              = $7e00
-parseAddressParameter   = memory_loc+$6
-dma_params_len          = memory_loc+$f
-dma_params_c64          = memory_loc+$11
-dma_params_exp          = memory_loc+$13
-
-!zone kawaridma
+!source "mem.inc"
 
     jmp .kawariDmaFetchPreWarm
     jmp .fromKawariToMemloc
@@ -49,16 +37,22 @@ dma_params_exp          = memory_loc+$13
 ; count high-byte is always zero
 ; destination is always memloc
 .kawariDmaFetchPreWarm
-    rts
-    ; closing registers and then opening them again brings back the previously stored values.
-.fromKawariToMemloc
     lda #0
     sta dma_params_len+1
     
-    lda #$4d
-    sta memloc
-    lda #$c6
-    sta memloc+1
+;    lda #$4d
+;    sta memloc
+;    lda #$c6
+;    sta memloc+1
+
+    rts
+    ; closing registers and then opening them again brings back the previously stored values.
+
+.fromKawariToMemloc
+    sta VIDEO_MEM_1_LO
+    sty VIDEO_MEM_1_HI
+    stx dma_params_len
+
 ;    lda memloc
 ;    sta VIDEO_MEM_1_LO
 ;    lda memloc+1
@@ -71,10 +65,6 @@ dma_params_exp          = memory_loc+$13
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
 ;fromKawariToMemloc
-    sta VIDEO_MEM_1_LO
-    sty VIDEO_MEM_1_HI
-    stx dma_params_len
-    
     jmp .kawariFetch
 
 ;    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
