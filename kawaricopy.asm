@@ -29,7 +29,7 @@ VIDEO_MEM_FLAGS   = $d03f
     jmp .fromKawariToMemloc
     jmp .swapBasic
     jmp .dmaStash
-    jmp .mlDmaCopy
+    jmp .mlDmaFetch
     jmp .dmaFetch
 
 ;sets the registers that are used by memloc operations constantly multiple times
@@ -39,36 +39,26 @@ VIDEO_MEM_FLAGS   = $d03f
 .kawariDmaFetchPreWarm
     lda #0
     sta dma_params_len+1
-    
-;    lda #$4d
-;    sta memloc
-;    lda #$c6
-;    sta memloc+1
 
     rts
-    ; closing registers and then opening them again brings back the previously stored values.
+
 
 .fromKawariToMemloc
+; .A=c64 address LB, .Y=c64 address HB, .X=length LB
     sta VIDEO_MEM_1_LO
     sty VIDEO_MEM_1_HI
     stx dma_params_len
-
-;    lda memloc
-;    sta VIDEO_MEM_1_LO
-;    lda memloc+1
-;    sta VIDEO_MEM_1_HI
     
-;    rts
-  
+    lda dma_params_c64
+    sta memloc
+    lda dma_params_c64+1
+    sta memloc+1
+
 ;copies a ressource (text constants, frames, navlabels) to the memloc area in RAM
-; .A=c64 address LB, .Y=c64 address HB, .X=length LB
-    ; video_mem_1 is destination address
-    ; video_mem_2 is source address
-;fromKawariToMemloc
+    ; video_mem_1 is source address
+    ; memloc is destination address
     jmp .kawariFetch
 
-;    ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
-;    jmp .execDmaAndCloseKawari
 
 ;swaps the currently running basic program with the one stored in expanded memory
 ; as the kawari doesn't have SWAP capability and insufficient space to use a swap-area we'll have to
@@ -86,9 +76,9 @@ VIDEO_MEM_FLAGS   = $d03f
     
     ; store dram-read-address in $fb/$fc
     lda $2b
-    sta $fb
+    sta memloc
     lda $2c
-    sta $fc
+    sta memloc+1
     
     
     ; VIDEO_MEM_1 = read-port
@@ -96,7 +86,7 @@ VIDEO_MEM_FLAGS   = $d03f
     lda #0
     sta VIDEO_MEM_1_LO
     sta VIDEO_MEM_2_LO
-    lda #80
+    lda #$80
     sta VIDEO_MEM_1_HI
     sta VIDEO_MEM_2_HI
     
@@ -105,10 +95,10 @@ VIDEO_MEM_FLAGS   = $d03f
     
     ldy #0
     
--   lda ($fb),y                   ; read from dram
+-   lda (memloc),y                ; read from dram
     pha                           ; put aside
     lda VIDEO_MEM_1_VAL           ; read from vram
-    sta ($fb),y                   ; write to dram
+    sta (memloc),y                ; write to dram
     pla                           ; get from aside
     sta VIDEO_MEM_2_VAL           ; write to vram
     
@@ -120,7 +110,7 @@ VIDEO_MEM_FLAGS   = $d03f
     
 +   iny
     bne -
-    inc $fc
+    inc memloc+1
     jmp -
     
 .backToBasic
@@ -182,8 +172,8 @@ VIDEO_MEM_FLAGS   = $d03f
     
     ldy #0
     
--   lda (memloc),y                   ; read from dram
-    sta VIDEO_MEM_1_VAL           ; read from vram
+-   lda (memloc),y                  ; read from dram
+    sta VIDEO_MEM_1_VAL             ; write to vram
     
     ; decrease the overall count, so we know whether we're done
     dec dma_params_len
@@ -238,7 +228,7 @@ VIDEO_MEM_FLAGS   = $d03f
 ;  which are both inside the VIC-II's memory area, fortunately.
     ; video_mem_1 is destination address
     ; video_mem_2 is source address
-.mlDmaCopy
+.mlDmaFetch
     
     ;lda dma_params_len
     ;sta VIDEO_MEM_1_IDX
@@ -248,6 +238,7 @@ VIDEO_MEM_FLAGS   = $d03f
 ; source
     lda dma_params_exp
     sta VIDEO_MEM_1_LO
+test
     lda dma_params_exp+1
     sta VIDEO_MEM_1_HI
 
