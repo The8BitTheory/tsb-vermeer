@@ -123,7 +123,10 @@ megaSwap
     sta memloc+2
     
     ; read from bank 0
--   lda dma_params_c64+1
+    lda dma_params_c64+1
+    tax
+    
+-   txa
     sta memloc+1
     lda (memloc),y
     
@@ -136,7 +139,8 @@ megaSwap
     lda [memloc],z
     
     ; write to bank 0
-    lda dma_params_c64+1
+    ;lda dma_params_c64+1
+    txa
     sta memloc+1
     sta (memloc),y
     
@@ -159,6 +163,7 @@ megaSwap
     bne -
     inc dma_params_exp+1
     inc dma_params_c64+1
+    inx
     jmp -
     
 .swapDone
