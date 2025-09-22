@@ -22,3 +22,7 @@ tsbneo.prg
 *.reu
 *.zip
 /build
+*.c64
+*.s64
+*.out
+*.code-workspace
