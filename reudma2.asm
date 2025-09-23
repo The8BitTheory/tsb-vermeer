@@ -1,4 +1,4 @@
-*=$7f50
+*=$0700
 
 !to "reudma2.bin.prg",cbm
 

@@ -1,5 +1,4 @@
-*=$7f50
-
+*=$0700
 !cpu m65
 !to "megadma2.bin.prg",cbm
 
@@ -16,22 +15,19 @@ dma_lbx       = $d700 ;low byte of address and execute
     jmp megaFetch
     jmp megaSwap
 
-
-
 ; generic stash command. used for copying ressource files to higher banks upon loading
 
 ;write to expanded memory
 megaStash
   lda #0
   sta .dmalistSourceBank  
-  
+  lda #5
+  sta .dmalistDestBank
+    
   lda dma_params_c64
   sta .dmalistSourceAddr
   lda dma_params_c64+1
   sta .dmalistSourceAddr+1
-
-  lda #5
-  sta .dmalistDestBank
   
   lda dma_params_exp
   sta .dmalistDestAddr
@@ -47,6 +43,7 @@ megaStash
   lda dma_params_len+1
   sta .dmalistCount+1
 
+.execDmaList
 ;knockVic4
   lda #$47      ;(dec 71) "G"
   sta key_register  
@@ -79,15 +76,21 @@ megaStash
 ; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca06 (memory.asm .dma_params_*)
 megaFetch
     lda #5
-    sta .dmalistSourceBank  
+    sta .dmalistSourceBank
+    lda #0
+    sta .dmalistDestBank
+    
+;    ldx #3
+;-   lda .fetchparam,x
+;    sta .fetchlist,x
+;    dex
+;    bpl -
   
     lda dma_params_exp
     sta .dmalistSourceAddr
     lda dma_params_exp+1
     sta .dmalistSourceAddr+1
 
-    lda #0
-    sta .dmalistDestBank
   
     lda dma_params_c64
     sta .dmalistDestAddr
@@ -113,64 +116,50 @@ megaFetch
 ; using $fb,$fc,$fd,$fe as 32-bit register for upper mem (mega65-ram bank 5). $fd is the bank, $fe is zero (b/c within first mb)
 ; and $fb,$fc as 16-bit register for lower-mem (c64-ram)
 megaSwap
-    lda #0
-    sta memloc+3
-    sta memloc
-    tay
-    taz
+    ; write chain-byte to dmalist-command
+    lda #%00000100
+    sta .dmalist
+    
+    ; copy from ram ($0800 at bank 0) to temp ($8000 at bank 1)
+    sec
+    lda $2d
+    sbc $2b
+    sta .dmalistCount
+    sta .dmalistCount+12
+    sta .dmalistCount+24
+    
+    lda $2e
+    sbc $2c
+    sta .dmalistCount+1
+    sta .dmalistCount+13
+    sta .dmalistCount+25
+    ; write count to 2nd and 3rd command as well
+    
+    lda #<.basic_ram_addr
+    sta .dmalistSourceAddr
+    lda #>.basic_ram_addr
+    sta .dmalistSourceAddr+1
 
-    lda #5
-    sta memloc+2
+    lda #.basic_ram_bank
+    sta .dmalistSourceBank
     
-    ; read from bank 0
-    lda dma_params_c64+1
-    tax
+    lda #<.basic_temp_addr
+    sta .dmalistDestAddr
     
--   txa ; source-hb to memloc
-    sta memloc+1
-    lda (memloc),y
+    lda #>.basic_temp_addr
+    sta .dmalistDestAddr+1
     
-    ; push to stack
-    pha
-    
-    ; destination-hb to memloc
-    lda dma_params_exp+1
-    sta memloc+1
-    ; read from bank 5
-    lda [memloc],z
-    
-    ; source-hb to memloc
-    txa
-    sta memloc+1
-    ; write to bank 0
-    sta (memloc),y
-    
-    
-    ; destination-HB to memloc
-    lda dma_params_exp+1
-    sta memloc+1
-    
-    ; pull from stack
-    pla
-    ; write to bank 5
-    sta [memloc],z
-    
-    ; decrease the overall count, so we know whether we're done
-    dec dma_params_len
-    bne +
-    dec dma_params_len+1
-    bmi .swapDone
-    
-+   iny
-    inz
-    bne -
-    inc dma_params_exp+1
-    inc dma_params_c64+1
-    inx
-    jmp -
+    lda #.basic_temp_bank
+    sta .dmalistDestBank
+
+    bsr .execDmaList
     
 .swapDone
     rts
+
+;.fetchparam !word dma_params_exp,dma_params_exp+1,dma_params_c64,dma_params_c64+1
+;.fetchlist  !word .dmalistSourceAddr,.dmalistSourceAddr+1,.dmalistDestAddr,.dmalistDestAddr+1
+
   
 .dmalist
   !byte 0     ; command lsb (0=copy, 3=fill)
@@ -186,3 +175,24 @@ megaSwap
   !byte 0     ; dest bank and flags
   !byte 0     ; command msb (always zero)
   !word 0     ; modulo. unused. always zero
+
+; copy from high to ram
+  !byte 4     ;copy + chain
+  !word 0     ;count - set in code
+  !word $8000 ;source address
+  !byte 5     ;source bank
+  !word $0801 ;dest address
+  !byte 0     ;dest bank
+  !byte 0
+  !word 0
+  
+; copy from temp to high
+  !byte 0     ;copy
+  !word 0     ;count - set in code
+  !word $8000 ;dest address
+  !byte 1     ;dest bank
+  !word $8000 ;source address
+  !byte 5     ;source bank
+  !byte 0
+  !word 0
+  

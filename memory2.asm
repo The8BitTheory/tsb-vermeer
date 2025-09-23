@@ -15,7 +15,8 @@ frmnum          = $ad8a
 getadr          = $b7f7
 
 execLocation    = $ca00    ; this is where ML routines go to in RAM
-expmem_loc = $7f50
+;expmem_loc      = $7f50
+expmem_loc      = $0700
 expmem_stash    = expmem_loc
 expmem_fetch    = expmem_loc+3
 expmem_swap     = expmem_loc+6
