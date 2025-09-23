@@ -89,7 +89,7 @@ reuStash
     
 reuFetch
     jsr .paramsToRegs
-    lda #REU_FETCH____
+    lda #REU_FETCH_A__
     jmp .executeCommand
 
 reuSwap

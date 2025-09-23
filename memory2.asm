@@ -207,9 +207,6 @@ fetchRoutine
     lda #>execLocation
     sta .dma_params_c64+1
     
-    jsr expmem_fetch
-    jmp execLocation
-    
 
 fetch
     jmp expmem_fetch
