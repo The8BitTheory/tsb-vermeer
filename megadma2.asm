@@ -126,30 +126,33 @@ megaSwap
     lda dma_params_c64+1
     tax
     
--   txa
+-   txa ; source-hb to memloc
     sta memloc+1
     lda (memloc),y
     
     ; push to stack
     pha
     
-    ; read from bank 5
+    ; destination-hb to memloc
     lda dma_params_exp+1
     sta memloc+1
+    ; read from bank 5
     lda [memloc],z
     
-    ; write to bank 0
-    ;lda dma_params_c64+1
+    ; source-hb to memloc
     txa
     sta memloc+1
+    ; write to bank 0
     sta (memloc),y
+    
+    
+    ; destination-HB to memloc
+    lda dma_params_exp+1
+    sta memloc+1
     
     ; pull from stack
     pla
-    
     ; write to bank 5
-    lda dma_params_exp+1
-    sta memloc+1
     sta [memloc],z
     
     ; decrease the overall count, so we know whether we're done

@@ -80,13 +80,7 @@ REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
     sta REURAM+1
     
     rts    
-; 2 count, 2 c64-address (lb,hb), 2 ext-address (lb,hb)
-;dma_ml_loc = $ca06 in memory.asm
-;$ca06 .dma_params_len   !byte 0,0
-;$ca06 .dma_params_c64   !byte <execLocation,>execLocation
-;$ca06 .dma_params_exp   !byte 0,0
-; on the mega65, this always copies from some bank 5 location to the bank 0 location taken from $ca2c
-; this is used by memory.asm to pull in ML-routines before execution
+
 reuStash
     jsr .paramsToRegs
   

@@ -43,7 +43,7 @@ baseH     !byte 0
 
 frame
 ; calculate absolute address of frame index offsets
-    jsr memory_prewarm
+    jsr .memloc_prewarm
 
     jsr chkcommaint
     stx fr
@@ -295,7 +295,7 @@ setup
         
 printConstant
     ; read constant index from parameter
-    jsr memory_prewarm
+    jsr .memloc_prewarm
     
     jsr chkcommaint
     stx zeileanf
@@ -401,14 +401,20 @@ loadCoordinates
 .fromExpF4ToMemloc
     lda f4
     ldy f4+1
-    jmp expmem_to_memloc
+    jmp memFetchResource
 
 ; .A=c64 address LB, .Y=c64 address HB, .X=length LB
 .fromExpF2ToMemloc
     lda f2
     ldy f2+1
-    jmp expmem_to_memloc
+    jmp memFetchResource
     
+.memloc_prewarm
+    lda #$4d
+    sta memloc
+    lda #$c6
+    sta memloc+1
+    rts
     
 tc        !word $7a00 ; address where the binary text constants are stored
 fa        !word $0400 ; address where the binary frame data is stored.

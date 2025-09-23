@@ -15,21 +15,25 @@ frmnum          = $ad8a
 getadr          = $b7f7
 
 execLocation    = $ca00    ; this is where ML routines go to in RAM
+expmem_loc = $7f50
+expmem_stash    = expmem_loc
+expmem_fetch    = expmem_loc+3
+expmem_swap     = expmem_loc+6
 
 
     jmp setup                       ; persist value for dma-working location (memloc)
     jmp addRoutineToDict            ; add ML-routine binary to dictionary
-    jmp .parseAddressParameter       ; parses the next basic parameter as address (0-65535)
+    jmp .parseAddressParameter      ; parses the next basic parameter as address (0-65535)
     jmp stashBasic                  ; a stash command that can be called from basic
     jmp fetchBasic                  ; a fetch command that can be called from basic
     jmp swapBasic                   ; a swap command that can be called from basic
     jmp stash                       ; a stash command that acts on values in dma_params_*
     jmp fetch                       ; a fetch command that acts on values in dma_params_*
     jmp swap                        ; a swap command that acts on values in dma_params_*
-    jmp fetchRessource              ; a fetch command that reads from expanded memory at .A/.Y .X and writes to C64's dma-working location (memloc). sets dma_params_* and calls fetch
+    jmp fetchResource               ; a fetch command that reads from expanded memory at .A/.Y .X and writes to C64's dma-working location (memloc). sets dma_params_* and calls fetch
     jmp fetchRoutine                ; a fetch command that reads from expanded memory data taken from the dictionary via index and writes to C64's execute-location ($ca00).
-    jmp swapBasicProgram
-                                    ; sets dma_params_* and calls fetch
+    jmp swapBasicProgram            ; swaps $0800 in DRAM with $8000 in expanded mem and continues running basic at the first line
+
     
 .dma_params_len   !byte 0,0
 .dma_params_c64   !byte 0,0
@@ -159,7 +163,7 @@ stash
     
     
 ; a fetch command that reads from expanded memory at .A/.Y .X and writes to C64's dma-working location (memloc). sets dma_params_* and calls fetch
-fetchRessource
+fetchResource
     stx .dma_params_len
     ldx #0
     stx .dma_params_len+1
