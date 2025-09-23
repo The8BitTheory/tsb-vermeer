@@ -4,21 +4,19 @@
 !source "mem.inc"
 
 HIBASE            = $0288  ; location of screen-ram high-byte
-
-
 plantExpMem       = $c64d
-
 .plantLoc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
 .genPlantData     = $fd                          
-; START OF CODE
+.expPlantVector     = $c3f0 ; vektor to reu location of plantation data (2304 bytes, 9x256 bytes)
 
+
+; START OF CODE
     jmp checkPlantation
 
 productivity  !byte 0
 size          !byte 0
 plantData     !byte 0,0,0,0,0,0
-
 
 ; compares plantation area with greenfield. params: location in screen-ram
 ;  params: x-coordinate (column), y-coordinate (row). both zero-based
@@ -26,7 +24,15 @@ plantData     !byte 0,0,0,0,0,0
 ;  size <4 means, invalid ground (building is not on 4 grass tiles)
 ;  also calculates the 4 bytes with area assignment
 checkPlantation
-
+    jsr chkcommaint
+    clc
+    txa
+    adc  .expPlantVector+1
+    tay ;high-byte of reu address
+    
+    lda .expPlantVector
+    ldx #$ff
+    jsr memFetchResource
 
     jsr chkcommaint
     stx .buildingCol
@@ -290,4 +296,4 @@ availablePlantationFound
 
 
 .bits6 !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
-.plantIndexX        !byte 0
+
