@@ -165,8 +165,6 @@ stash
 ; a fetch command that reads from expanded memory at .A/.Y .X and writes to C64's dma-working location (memloc). sets dma_params_* and calls fetch
 fetchResource
     stx .dma_params_len
-    ldx #0
-    stx .dma_params_len+1
 
     sta .dma_params_exp
     sty .dma_params_exp+1
@@ -175,6 +173,9 @@ fetchResource
     sta .dma_params_c64
     lda .memloc_park+1
     sta .dma_params_c64+1
+    
+    lda #0
+    sta .dma_params_len+1
     
     jmp expmem_fetch
     

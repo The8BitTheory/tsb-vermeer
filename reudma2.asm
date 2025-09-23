@@ -83,35 +83,26 @@ REU_VERIFY___F      = $cf           ;Speicherbereich vergleichen
 
 reuStash
     jsr .paramsToRegs
-  
-    lda #0
-    sta REUBANK
-  
     lda #REU_STASH____
-    sta REUCOMMAND
-    
-    rts
+    jmp .executeCommand
+
     
 reuFetch
     jsr .paramsToRegs
-  
-    lda #0
-    sta REUBANK
-  
     lda #REU_FETCH____
-    sta REUCOMMAND
-    
-    rts
+    jmp .executeCommand
 
 reuSwap
     jsr .paramsToRegs
-  
+    lda #REU_SWAP____
+    
+.executeCommand
+    pha
     lda #0
     sta REUBANK
-  
-    lda #REU_SWAP____
+
+    pla
     sta REUCOMMAND
-    
     rts
 
  
