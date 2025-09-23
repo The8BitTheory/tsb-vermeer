@@ -51,7 +51,7 @@ chrgot          = $79
     sta dma_params_exp+1
     
     ;copy
-    jsr expmem_dma_fetch
+    jsr memFetch
 
     jsr chrgot  ; no more parameters?
     beq +       ; no. we're done

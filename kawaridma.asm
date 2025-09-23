@@ -42,6 +42,10 @@ VIDEO_MEM_FLAGS   = $d03f
     ; closing registers and then opening them again brings back the previously stored values.
 ;    jsr .knockKawariOpen
 .fromKawariToMemloc
+    sta VIDEO_MEM_2_LO
+    sty VIDEO_MEM_2_HI
+    stx VIDEO_MEM_1_IDX 
+
     lda #0
     sta VIDEO_MEM_2_IDX
     
@@ -61,9 +65,9 @@ VIDEO_MEM_FLAGS   = $d03f
 ;    pha
 ;    jsr .knockKawariOpen
 ;    pla
-    sta VIDEO_MEM_2_LO
-    sty VIDEO_MEM_2_HI
-    stx VIDEO_MEM_1_IDX
+;    sta VIDEO_MEM_2_LO
+;    sty VIDEO_MEM_2_HI
+;    stx VIDEO_MEM_1_IDX
 
     ldx #16                ; Perform DMA op (8=dram to vram, 16=vram to dram)
     jmp .execDmaAndCloseKawari

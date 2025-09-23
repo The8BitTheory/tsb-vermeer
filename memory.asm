@@ -100,7 +100,7 @@ fetch
     sta .dma_params_c64+1
 
     ; copy from reu to memory
-    jsr expmem_dma_fetch
+    jsr expmem_dma_fetch        ; goes to $7ecc (.mlDmaFetch routine)
 
     jmp execLocation
 

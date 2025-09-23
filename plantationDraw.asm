@@ -11,15 +11,15 @@ spalteanf         = $c5e0
 plantvector       = $c3f0 ;this points to the location in memexp that contains 2304 bytes of plantation data
                           ;plantations of first town are at this address, each following town is at plus 256
 
-memloc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
+;memloc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
 ;.plantdataaddr    = $fd   ;contains the reu-location of the current town
 
     jmp drawPlantations
     
 drawPlantations
-    jsr expmem_prewarm  ;set constant values in memory expansion (len-HB=0, dest-address=$c64d)
-        
+    jsr memory_prewarm  ;set constant values in memory expansion (len-HB=0, dest-address=$c64d)
+    
     ; parse town-id
     jsr chkcommaint
     txa    
