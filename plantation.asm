@@ -3,11 +3,11 @@
 !to "plantation.bin.prg",cbm
 !source "mem.inc"
 
-HIBASE            = $0288  ; location of screen-ram high-byte
-plantExpMem       = $c64d
-.plantLoc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
+HIBASE              = $0288  ; location of screen-ram high-byte
+plantExpMem         = $c64d
+.plantLoc           = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
-.genPlantData     = $fd                          
+.genPlantData       = $fd                          
 .expPlantVector     = $c3f0 ; vektor to reu location of plantation data (2304 bytes, 9x256 bytes)
 
 
@@ -24,6 +24,7 @@ plantData     !byte 0,0,0,0,0,0
 ;  size <4 means, invalid ground (building is not on 4 grass tiles)
 ;  also calculates the 4 bytes with area assignment
 checkPlantation
+    ; fetch plantation data of this town into $c64d
     jsr chkcommaint
     clc
     txa
@@ -34,6 +35,7 @@ checkPlantation
     ldx #$ff
     jsr memFetchResource
 
+    ; get coordinates of current selection
     jsr chkcommaint
     stx .buildingCol
     jsr chkcommaint
@@ -100,7 +102,7 @@ availablePlantationFound
     inc .plantLoc+1
 
   ; check if building is on solid ground (no water, no rocks)
-+   ldx #0        ; x contains number of valid ground tiles (4 means, position is ok)
++   ldx #0        ; x contains number of valid ground tiles (4 means position is ok)
     ldy #0
     sty size
   
