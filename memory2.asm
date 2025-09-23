@@ -20,6 +20,8 @@ expmem_stash    = expmem_loc
 expmem_fetch    = expmem_loc+3
 expmem_swap     = expmem_loc+6
 
+basic_exp       = $8000
+
 
     jmp setup                       ; persist value for dma-working location (memloc)
     jmp addRoutineToDict            ; add ML-routine binary to dictionary
@@ -114,28 +116,28 @@ fetchBasic
     jsr .parse3Params
     jmp expmem_fetch
     
-; copying from $0800 instead of $0801, that allows us to keep the low-byte identical between source and target
-;  so we only have to change the HB between read and write
+; copying to $8001 instead of $8000, that allows us to keep the low-byte identical between source and target
+;  so we only have to change the HB between read and write when the memory expansion doesn't have native swap
 swapBasicProgram
     sec
     lda $2d
-    sbc #$00
+    sbc $2b
     sta .dma_params_len
   
     lda $2e
-    sbc #$08
+    sbc $2c
     sta .dma_params_len+1
     
 ; set reu address
-    lda #$00
+    lda #<basic_exp
     sta .dma_params_exp
-    lda #$80
+    lda #>basic_exp
     sta .dma_params_exp+1
     
 ; set c64 address
-    lda #$00
+    lda $2b
     sta .dma_params_c64
-    lda #$08
+    lda $2c
     sta .dma_params_c64+1
 
     jsr expmem_swap
@@ -203,6 +205,9 @@ fetchRoutine
     sta .dma_params_c64
     lda #>execLocation
     sta .dma_params_c64+1
+    
+    jsr expmem_fetch
+    jmp execLocation
     
 
 fetch
