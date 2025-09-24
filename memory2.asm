@@ -44,10 +44,11 @@ basic_exp       = $8000
 
 ; length and locations of routines in expanded memory
 ; setup is writing to this
-; 3 entries so far
+; 4 entries so far -> 16 bytes
 ; - 0=sprites
 ; - 1=auction
 ; - 2=plantation
+; - 3=plantation draw
 .exp_dictionary   !fill 20
 
 setup

@@ -7,16 +7,17 @@ HIBASE              = $0288  ; location of screen-ram high-byte
 plantExpMem         = $c64d
 .plantLoc           = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
-.genPlantData       = $fd                          
+.curPlantData       = $fd
 .expPlantVector     = $c3f0 ; vektor to reu location of plantation data (2304 bytes, 9x256 bytes)
 
 
 ; START OF CODE
     jmp checkPlantation
 
-productivity  !byte 0
-size          !byte 0
-plantData     !byte 0,0,0,0,0,0
+productivity    !byte 0
+size            !byte 0
+plantIndex      !byte #$ff     ; the index of the plantation that was checked. $ff if no available plantation
+
 
 ; compares plantation area with greenfield. params: location in screen-ram
 ;  params: x-coordinate (column), y-coordinate (row). both zero-based
@@ -42,7 +43,8 @@ checkPlantation
     stx .buildingRow
     
     ; iterate over plantations of this town
-    ldx #0
+    ldy #0  ; contains the index of the plantation
+    ldx #0  ; contains the memory offset of the plantation (ie index x 13)
 
 checkPlantationOwner
     ;find available plantation slot
@@ -51,6 +53,7 @@ checkPlantationOwner
     beq availablePlantationFound       ; if unoccupied (owner is $ff), use this
     
     ; jump to next plantation data
+    iny
     txa                   ; add 13 bytes to index (= location of next plantation data)
     clc
     adc #13
@@ -63,14 +66,16 @@ checkPlantationOwner
     
 
 availablePlantationFound
+    sty plantIndex
+    
     clc
     txa
     adc #<plantExpMem
-    sta .genPlantData
+    sta .curPlantData
     
     lda #>plantExpMem
     adc #0
-    sta .genPlantData+1
+    sta .curPlantData+1
 
     lda #242            ;40*6 + 2 (row 6, column 2)
     sta .plantStart
@@ -136,12 +141,12 @@ availablePlantationFound
 ;   - maximum ram location (bottom-right of available area)
     ; clear plantation data
 +   lda #0
-    sta plantData
-    sta plantData+1
-    sta plantData+2
-    sta plantData+3
-    sta plantData+4
-    sta plantData+5
+    sta .plantData
+    sta .plantData+1
+    sta .plantData+2
+    sta .plantData+3
+    sta .plantData+4
+    sta .plantData+5
     sta .plantRow
     sta .plantCol
 
@@ -198,12 +203,12 @@ availablePlantationFound
     bne .toNextCol
     inc size
     ldx .plantRow
-    lda plantData,x
+    lda .plantData,x
     ldx .plantCol
     ora .bits6,x
     ldx .plantRow
     
-    sta plantData,x
+    sta .plantData,x
 
 .toNextCol
     inc .plantCol
@@ -240,28 +245,28 @@ availablePlantationFound
 .plantCheckDone    
     lda .buildingCol
     ldy #3
-    sta (.genPlantData),y
+    sta (.curPlantData),y
     
     lda .buildingRow
     ldy #4
-    sta (.genPlantData),y
+    sta (.curPlantData),y
     
     ldx #5
     ldy #5+5        ;6 lines to decrement (five to zero), 5 is the offset to coverage data inside the 13 byte plantation block
--   lda plantData,x
-    sta (.genPlantData),y
+-   lda .plantData,x
+    sta (.curPlantData),y
     dey
     dex
     bpl -
 
     lda size
     ldy #11
-    sta (.genPlantData),y
+    sta (.curPlantData),y
     
     lda #100
     sta productivity
     ldy #12
-    sta (.genPlantData),y
+    sta (.curPlantData),y
     
     jsr memStash
 
@@ -294,7 +299,7 @@ availablePlantationFound
 .plantCol         !byte 0
 .plantRow         !byte 0
 .plantStart       !word 0
-
+.plantData     !byte 0,0,0,0,0,0
 
 
 .bits6 !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
