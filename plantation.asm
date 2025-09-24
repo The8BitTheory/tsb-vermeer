@@ -4,12 +4,8 @@
 !source "mem.inc"
 
 HIBASE              = $0288  ; location of screen-ram high-byte
-plantExpMem         = $c64d
 .plantLoc           = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
                           ;contains the plantation's top-left tile later (can be building, can be less)
-.curPlantData       = $fd
-.expPlantVector     = $c3f0 ; vektor to reu location of plantation data (2304 bytes, 9x256 bytes)
-
 
 ; START OF CODE
     jmp checkPlantation
@@ -25,17 +21,8 @@ plantIndex      !byte #$ff     ; the index of the plantation that was checked. $
 ;  size <4 means, invalid ground (building is not on 4 grass tiles)
 ;  also calculates the 4 bytes with area assignment
 checkPlantation
-    ; fetch plantation data of this town into $c64d
-    jsr chkcommaint
-    clc
-    txa
-    adc  .expPlantVector+1
-    tay ;high-byte of reu address
+    jsr fetchTownPlantationData
     
-    lda .expPlantVector
-    ldx #$ff
-    jsr memFetchResource
-
     ; get coordinates of current selection
     jsr chkcommaint
     stx .buildingCol
@@ -68,14 +55,7 @@ checkPlantationOwner
 availablePlantationFound
     sty plantIndex
     
-    clc
-    txa
-    adc #<plantExpMem
-    sta .curPlantData
-    
-    lda #>plantExpMem
-    adc #0
-    sta .curPlantData+1
+    jsr calcCurPlantData
 
     lda #242            ;40*6 + 2 (row 6, column 2)
     sta .plantStart
@@ -252,31 +232,25 @@ availablePlantationFound
     sta (.curPlantData),y
     
     ldx #5
-    ldy #5+5        ;6 lines to decrement (five to zero), 5 is the offset to coverage data inside the 13 byte plantation block
+    ldy #5+5        ;6 lines to decrement (from five to zero), 5 is the offset to coverage data inside the 13 byte plantation block
 -   lda .plantData,x
     sta (.curPlantData),y
     dey
     dex
     bpl -
 
+; write size
     lda size
     ldy #11
     sta (.curPlantData),y
     
+; now, check for adjacent water. yes, productivity 110. no, productivity 100
     lda #100
     sta productivity
     ldy #12
     sta (.curPlantData),y
     
-    jsr memStash
-
-; now, check for adjacent water. yes, productivity 110. no, productivity 100
-
-    
-
-; write size to .Y
-    
-    rts
+    jmp memStash
 
 
 ; - water and rocks (value not 96)
@@ -288,6 +262,7 @@ availablePlantationFound
     inx
 +   rts
 
+!source "commonPlantation.inc"
 
 .buildingCol      !byte 0
 .buildingRow      !byte 0

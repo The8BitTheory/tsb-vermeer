@@ -15,11 +15,6 @@ spaltenanz          = $C5E1
 zeilenanz           = $C5E2
 
 
-plantExpMem         = $c64d
-.curPlantData       = $fd   ;this points to one specific plantation (ie $c64d + offset)
-.expPlantVector     = $c3f0 ;this points to the location in memexp that contains 2304 bytes of plantation data
-                            ;plantations of first town are at this address, each following town is at plus 256
-
 ; draws all plantations of a town
 
 ;    jmp drawPlantations
@@ -29,16 +24,7 @@ drawPlantations
     sta spaltenanz
     sta zeilenanz
     
-    ; fetch plantation data of this town into $c64d
-    jsr chkcommaint
-    clc
-    txa
-    adc .expPlantVector+1
-    tay ;high-byte of reu address
-    
-    lda .expPlantVector
-    ldx #$ff
-    jsr memFetchResource
+    jsr fetchTownPlantationData
     
     ; iterate over plantations of this town
     ldx #0  ; contains the memory offset of the plantation (ie index x 13)
@@ -67,14 +53,7 @@ gotoNextPlantationData
 availablePlantationFound
     stx .plantOffsetX
     
-    clc
-    txa
-    adc #<plantExpMem
-    sta .curPlantData
-    
-    lda #>plantExpMem
-    adc #0
-    sta .curPlantData+1
+    jsr calcCurPlantData
     
     ldy #1
     lda (.curPlantData),y
@@ -155,7 +134,9 @@ gotoNextCol
     
     jmp handlePlantationLine    ;last col reached, go to next line
     
-    
+!source "commonPlantation.inc"
+
+
 .plantOffsetX       !byte 0 ;temp storage for x offset in plantation data (mulitple of 13)
 .plantLine          !byte 0
 .plantCol           !byte 0
