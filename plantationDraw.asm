@@ -3,24 +3,32 @@
 
 !source "mem.inc"
 
-bsout             = $ffd2
-zeileanf          = $c5df
-spalteanf         = $c5e0
+bsout               = $ffd2
+mve9a               = $9ecb
+movez               = $a0b1
+basromaus           = $8e5f
+basromein           = $8e3a
+
+zeileanf            = $c5df
+spalteanf           = $c5e0
+spaltenanz          = $C5E1
+zeilenanz           = $C5E2
+
 
 plantExpMem         = $c64d
-.curPlantData       = $fd ;this points to one specific plantation (ie $c64d + offset)
-.expPlantVector   = $c3f0 ;this points to the location in memexp that contains 2304 bytes of plantation data
-                          ;plantations of first town are at this address, each following town is at plus 256
-
-;memloc         = $fb   ;screen-ram location of the plantation's building (ie +2/+2 from top-most left point)
-                          ;contains the plantation's top-left tile later (can be building, can be less)
-;.plantdataaddr    = $fd   ;contains the reu-location of the current town
+.curPlantData       = $fd   ;this points to one specific plantation (ie $c64d + offset)
+.expPlantVector     = $c3f0 ;this points to the location in memexp that contains 2304 bytes of plantation data
+                            ;plantations of first town are at this address, each following town is at plus 256
 
 ; draws all plantations of a town
 
 ;    jmp drawPlantations
     
 drawPlantations
+    lda #1
+    sta spaltenanz
+    sta zeilenanz
+    
     ; fetch plantation data of this town into $c64d
     jsr chkcommaint
     clc
@@ -67,6 +75,10 @@ availablePlantationFound
     lda #>plantExpMem
     adc #0
     sta .curPlantData+1
+    
+    ldy #1
+    lda (.curPlantData),y
+    sta .plantSeed
 
     ldy #3
     clc
@@ -104,8 +116,24 @@ handlePlantationCol
     ldx zeileanf   ;x-reg contains row
     jsr $fff0   ;set cursor position
     
-    lda #97+128
+    ldx .plantSeed
+    clc
+    lda .plantChar,x
+    adc #128
     jsr bsout
+    
+    jsr basromaus
+    
+    ; calc addresses for color-ram
+    lda #1
+    sta $a6
+    jsr movez
+    
+    ; write color value to calculated addresses
+    lda .plantColor,x
+    jsr mve9a
+    
+    jsr basromein
     
     ldy .plantLine
     
@@ -132,3 +160,6 @@ gotoNextCol
 .plantLine          !byte 0
 .plantCol           !byte 0
 .bits6              !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
+.plantColor         !byte 7,15,15,15
+.plantChar          !byte 97,98,99,100
+.plantSeed          !byte 0
