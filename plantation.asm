@@ -264,18 +264,15 @@ availablePlantationFound
 
 !source "commonPlantation.inc"
 
-.buildingCol      !byte 0
-.buildingRow      !byte 0
+.buildingCol    !byte 0
+.buildingRow    !byte 0
 
-.curCol           !byte 0
-.curRow           !byte 0
-.lastCol          !byte 0
-.lastRow          !byte 0
-.plantCol         !byte 0
-.plantRow         !byte 0
-.plantStart       !word 0
-.plantData     !byte 0,0,0,0,0,0
-
-
-.bits6 !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
+.curCol         !byte 0
+.curRow         !byte 0
+.lastCol        !byte 0
+.lastRow        !byte 0
+.plantCol       !byte 0
+.plantRow       !byte 0
+.plantStart     !word 0
+.plantData      !byte 0,0,0,0,0,0
 

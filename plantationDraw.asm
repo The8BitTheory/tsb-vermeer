@@ -140,7 +140,7 @@ gotoNextCol
 .plantOffsetX       !byte 0 ;temp storage for x offset in plantation data (mulitple of 13)
 .plantLine          !byte 0
 .plantCol           !byte 0
-.bits6              !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
 .plantColor         !byte 7,15,15,15
 .plantChar          !byte 97,98,99,100
 .plantSeed          !byte 0
+

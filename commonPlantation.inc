@@ -25,3 +25,6 @@ calcCurPlantData
     adc #0
     sta .curPlantData+1
     rts
+    
+.bits6 !byte %00100000, %00010000, %00001000, %00000100, %00000010, %00000001
+
