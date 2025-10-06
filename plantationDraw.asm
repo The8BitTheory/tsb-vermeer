@@ -15,10 +15,78 @@ spaltenanz          = $C5E1
 zeilenanz           = $C5E2
 
 
-; draws all plantations of a town
+playerId            = plantExpMem+255
+plantSize           = plantExpMem+19*13
 
-;    jmp drawPlantations
+
+    jmp drawPlantations
+;    jmp calcPlayerPlantationSizes
     
+; calculates the total size per crop for a player in a location.
+; used for the hub screen
+; writes the results to $c64d + 19*13 (0 offset for first crop, 2 offset for second crop)
+;calcPlayerPlantationSizes
+    jsr chkcommaint
+    stx playerId
+    
+    ldx #0
+    stx plantSize
+    stx plantSize+1
+    stx plantSize+2
+    stx plantSize+3
+    
+.handlePlantation
+    lda plantExpMem,x
+    cmp playerId
+    beq .whichCrop
+    
+    txa
+    clc
+    adc #13
+    bcs .calcDone   ;if carry flag set, we're beyond the 19 plantations
+    tax
+    jmp .handlePlantation
+    
+.whichCrop
+    inx
+    inx
+    clc
+    lda #<plantSize
+    adc plantExpMem,x   ;adds 0 or 1
+    adc plantExpMem,x   ;adds 0 or 1 - resulting in a value in .a which points to plantSize0 or plantSize1
+
+    sta .curPlantData   ;store address of sum to zeropage
+    lda #>plantSize
+    sta .curPlantData+1
+    
+    ;set read-index to plantation-size
+    txa
+    clc
+    adc #9
+    tax
+
+    ;load size of current plantation    
+    lda plantExpMem,x
+    
+    ;add size to previous sizes of this crop
+    ldy #0
+    clc
+    adc (.curPlantData),y
+    sta (.curPlantData),y
+    bcc +
+    lda #0
+    iny
+    adc (.curPlantData),y
+    sta (.curPlantData),y
+
++   inx
+    inx
+    jmp .handlePlantation
+    
+.calcDone
+    rts
+
+; draws all plantations of a town    
 drawPlantations
     lda #1
     sta spaltenanz
